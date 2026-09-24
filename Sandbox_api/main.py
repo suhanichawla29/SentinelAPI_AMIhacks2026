@@ -39,8 +39,12 @@ USERS = {
 }
 
 ORDERS = {
+    "101": {"id": "101", "owner": "asha", "item": "Laptop Sleeve", "amount": 29.99},
+    "102": {"id": "102", "owner": "ravi", "item": "Mechanical Keyboard", "amount": 120.00},
+    "202": {"id": "202", "owner": "ravi", "item": "Mechanical Keyboard", "amount": 120.00},
     "ord-101": {"id": "ord-101", "owner": "asha", "item": "Laptop Sleeve", "amount": 29.99},
     "ord-102": {"id": "ord-102", "owner": "ravi", "item": "Mechanical Keyboard", "amount": 120.00},
+    "ord-202": {"id": "ord-202", "owner": "ravi", "item": "Mechanical Keyboard", "amount": 120.00},
 }
 
 
