@@ -2,6 +2,7 @@ import uuid
 import json
 import subprocess
 import sys
+from typing import Optional
 from pathlib import Path
 from fastapi import FastAPI, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
@@ -15,19 +16,30 @@ FRONTEND = ROOT / "frontend"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 SCANNER_FILE = ROOT / "Scanner" / "Scan.py"
+ACTIVE_SCANS = {}
 
 # Serve static frontend files
 app.mount("/static", StaticFiles(directory=FRONTEND), name="static")
+app.mount("/frontend", StaticFiles(directory=FRONTEND), name="frontend")
 
 class ScanRequest(BaseModel):
     target_url: str = "http://127.0.0.1:8000"
+    priority: str = "all"
+    custom_token: Optional[str] = None
 
-def run_scanner_job(scan_id: str, target_url: str):
+def run_scanner_job(scan_id: str, target_url: str, priority: str):
     """Executes in background worker thread so the UI never hangs."""
     out_file = REPORTS_DIR / f"{scan_id}.json"
+    ACTIVE_SCANS[scan_id]["status"] = "running"
     try:
         run = subprocess.run(
-            [sys.executable, str(SCANNER_FILE), "--target", target_url, "--out", str(out_file)],
+            [
+                sys.executable,
+                str(SCANNER_FILE),
+                "--target", target_url,
+                "--out", str(out_file),
+                "--priority", priority,
+            ],
             cwd=ROOT,
             capture_output=True,
             text=True,
@@ -43,6 +55,7 @@ def run_scanner_job(scan_id: str, target_url: str):
                 "output": run.stdout or run.stderr
             }
             out_file.write_text(json.dumps(fallback, indent=2), encoding="utf-8")
+            ACTIVE_SCANS[scan_id]["status"] = "completed" if run.returncode == 0 else "failed"
     except Exception as e:
         err_report = {
             "scan_id": scan_id,
@@ -51,6 +64,7 @@ def run_scanner_job(scan_id: str, target_url: str):
             "error": str(e)
         }
         out_file.write_text(json.dumps(err_report, indent=2), encoding="utf-8")
+        ACTIVE_SCANS[scan_id]["status"] = "failed"
 
 @app.get("/")
 def serve_dashboard():
@@ -67,8 +81,18 @@ def serve_js():
 @app.post("/scan")
 def trigger_scan(req: ScanRequest, bg: BackgroundTasks):
     scan_id = str(uuid.uuid4())[:8]
-    bg.add_task(run_scanner_job, scan_id, req.target_url)
+    ACTIVE_SCANS[scan_id] = {
+        "scan_id": scan_id,
+        "status": "queued",
+        "target_url": req.target_url,
+        "priority": req.priority,
+    }
+    bg.add_task(run_scanner_job, scan_id, req.target_url, req.priority)
     return {"status": "queued", "scan_id": scan_id}
+
+@app.get("/scans")
+def get_scans():
+    return list(ACTIVE_SCANS.values())
 
 @app.get("/report")
 def get_latest_or_default_report():
@@ -84,3 +108,4 @@ def get_specific_report(scan_id: str):
     if not target_path.exists():
         return {"status": "processing", "scan_id": scan_id}
     return json.loads(target_path.read_text(encoding="utf-8"))
+    
