@@ -439,19 +439,18 @@
     </div>
   </div>
 
+ 
   <script>
     let currentReport = null;
 
     function renderCheckCard(c) {
       const status = (c.status || c.result || 'INFO').toUpperCase();
-      const statusClass = status === 'PASS' ? 'status-pass' : status === 'FAIL' ? 'status-fail' : 'status-inconclusive';
+      const statusClass = (status === 'PASS') ? 'status-pass' : (status === 'VULNERABLE' || status === 'FAIL') ? 'status-fail' : 'status-inconclusive';
 
       const meta = [];
+      if (c.status_code) meta.push({ key: 'Status Code', val: c.status_code });
       if (c.endpoint || c.url) meta.push({ key: 'Endpoint', val: c.endpoint || c.url });
       if (c.method) meta.push({ key: 'Method', val: c.method });
-      if (c.status_code || c.http_status) meta.push({ key: 'HTTP Status', val: c.status_code || c.http_status });
-      if (c.severity) meta.push({ key: 'Severity', val: c.severity });
-      if (c.type) meta.push({ key: 'Check Type', val: c.type });
 
       const metaHtml = meta.length > 0 ? `
         <div class="check-meta-grid">
@@ -464,69 +463,59 @@
         </div>
       ` : '';
 
-      const desc = c.details || c.description || c.message || '';
+      const desc = c.explanation || c.details || c.description || '';
       const descHtml = desc ? `<div class="check-desc">${desc}</div>` : '';
-
-      const extraData = Object.assign({}, c);
-      delete extraData.name;
-      delete extraData.status;
-      delete extraData.result;
-      delete extraData.details;
-      delete extraData.description;
-      delete extraData.message;
-
-      const rawJson = Object.keys(extraData).length > 0 ? `
-        <details>
-          <summary>Diagnostic Payload</summary>
-          <pre>${JSON.stringify(extraData, null, 2)}</pre>
-        </details>
-      ` : '';
+      const fixHtml = c.suggested_fix ? `<div class="check-desc" style="color: var(--accent-amber); font-weight: 500;"><strong>Suggested Fix:</strong> ${c.suggested_fix}</div>` : '';
 
       return `
         <div class="check-card">
           <div class="check-header">
-            <span class="check-title">${c.name || c.id || 'Security Check'}</span>
+            <span class="check-title">${c.name || 'Security Check'}</span>
             <span class="badge ${statusClass}">${status}</span>
           </div>
           ${descHtml}
+          ${fixHtml}
           ${metaHtml}
-          ${rawJson}
         </div>
       `;
+    }
+
+    function applyReportToUI(data) {
+      currentReport = data;
+      document.getElementById('checked-at').textContent = data.checked_at_utc || '—';
+      
+      const badge = document.getElementById('overall-badge');
+      const status = (data.overall_result || 'INCONCLUSIVE').toUpperCase();
+      badge.textContent = status;
+      badge.className = 'badge ' + (
+        status === 'PASS' ? 'status-pass' :
+        (status === 'VULNERABLE' || status === 'FAIL') ? 'status-fail' : 'status-inconclusive'
+      );
+
+      const container = document.getElementById('checks-container');
+      const countSpan = document.getElementById('checks-count');
+
+      if (data.checks && data.checks.length > 0) {
+        countSpan.textContent = `${data.checks.length} checks performed`;
+        container.innerHTML = data.checks.map(renderCheckCard).join('');
+      } else if (data.error) {
+        countSpan.textContent = '0 checks';
+        container.innerHTML = `<p style="color: var(--accent-rose); font-weight: 500;">${data.error}</p>`;
+      } else {
+        countSpan.textContent = '0 checks';
+        container.innerHTML = '<p style="color: var(--text-muted);">No checks found in report.</p>';
+      }
+
+      document.getElementById('modal-json-pre').textContent = JSON.stringify(data, null, 2);
     }
 
     async function fetchReport() {
       try {
         const res = await fetch('/report');
-        currentReport = await res.json();
-        
-        document.getElementById('checked-at').textContent = currentReport.checked_at_utc || '—';
-        
-        const badge = document.getElementById('overall-badge');
-        const status = (currentReport.overall_result || 'INCONCLUSIVE').toUpperCase();
-        badge.textContent = status;
-        badge.className = 'badge ' + (
-          status === 'PASS' ? 'status-pass' :
-          status === 'FAIL' ? 'status-fail' : 'status-inconclusive'
-        );
-
-        const container = document.getElementById('checks-container');
-        const countSpan = document.getElementById('checks-count');
-
-        if (currentReport.checks && currentReport.checks.length > 0) {
-          countSpan.textContent = `${currentReport.checks.length} checks performed`;
-          container.innerHTML = currentReport.checks.map(renderCheckCard).join('');
-        } else if (currentReport.error) {
-          countSpan.textContent = '0 checks';
-          container.innerHTML = `<p style="color: var(--accent-rose); font-weight: 500;">${currentReport.error}</p>`;
-        } else {
-          countSpan.textContent = '0 checks';
-          container.innerHTML = '<p style="color: var(--text-muted);">No scan checks recorded in scan_report.json.</p>';
-        }
-
-        document.getElementById('modal-json-pre').textContent = JSON.stringify(currentReport, null, 2);
+        const data = await res.json();
+        applyReportToUI(data);
       } catch (err) {
-        document.getElementById('checks-container').innerHTML = '<p style="color: var(--accent-rose);">Error communicating with report endpoint.</p>';
+        document.getElementById('checks-container').innerHTML = '<p style="color: var(--accent-rose);">Error loading report.</p>';
       }
     }
 
@@ -534,12 +523,33 @@
       const btn = document.getElementById('scan-btn');
       btn.innerHTML = '<span>⏳ Scanning...</span>';
       btn.disabled = true;
+
       try {
-        await fetch('/scan', { method: 'POST' });
-        await fetchReport();
+        const res = await fetch('/scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target_url: 'http://127.0.0.1:8000' })
+        });
+        const init = await res.json();
+        const scanId = init.scan_id;
+
+        // Poll for the scan report
+        let attempts = 0;
+        const interval = setInterval(async () => {
+          attempts++;
+          const pollRes = await fetch(`/report/${scanId}`);
+          const pollData = await pollRes.json();
+
+          if (pollData.status !== 'running' || attempts > 20) {
+            clearInterval(interval);
+            btn.innerHTML = '<span>⚡ Run Security Scan</span>';
+            btn.disabled = false;
+            applyReportToUI(pollData);
+          }
+        }, 1500);
+
       } catch (e) {
-        alert('Scan trigger failed');
-      } finally {
+        alert('Scan trigger failed: ' + e);
         btn.innerHTML = '<span>⚡ Run Security Scan</span>';
         btn.disabled = false;
       }
@@ -547,36 +557,30 @@
 
     function openJsonModal() {
       document.getElementById('json-modal').style.display = 'flex';
-      if (currentReport) {
-        document.getElementById('modal-json-pre').textContent = JSON.stringify(currentReport, null, 2);
-      }
     }
-
     function closeModal() {
       document.getElementById('json-modal').style.display = 'none';
     }
-
     function closeJsonModal(e) {
       if (e.target.id === 'json-modal') closeModal();
     }
-
     function copyJsonToClipboard() {
       if (!currentReport) return;
       navigator.clipboard.writeText(JSON.stringify(currentReport, null, 2));
       alert('JSON copied to clipboard!');
     }
-
     function downloadJson() {
       if (!currentReport) return;
       const blob = new Blob([JSON.stringify(currentReport, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `scan_report_${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+      a.download = `scan_report.json`;
       a.click();
       URL.revokeObjectURL(url);
     }
 
+    // Load initial report on startup
     fetchReport();
   </script>
 </body>
