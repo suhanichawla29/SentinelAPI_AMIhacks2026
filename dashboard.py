@@ -11,8 +11,36 @@ FRONTEND = ROOT / "frontend"
 REPORT_FILE = ROOT / "scan_report.json"
 SCANNER_FILE = ROOT / "Scanner" / "Scan.py"
 
+class Dashboard(BaseHTTPRequestHandler):
+def do_GET(self):
+        if self.path in ('/', '/index.html'):
+            target = FRONTEND / "index.html"
+            content_type = "text/html; charset=utf-8"
+        elif self.path == '/report':
+            self.serve_report()
+            return
+        else:
+            # Strip leading slash to resolve static files from FRONTEND
+            rel_path = self.path.lstrip('/')
+            target = FRONTEND / rel_path
+            if target.suffix == '.css':
+                content_type = "text/css"
+            elif target.suffix == '.js':
+                content_type = "application/javascript"
+            elif target.suffix in ('.png', '.jpg', '.jpeg', '.svg', '.ico'):
+                content_type = f"image/{target.suffix.lstrip('.')}"
+            else:
+                content_type = "application/octet-stream"
 
-
+        if target.exists() and target.is_file():
+            data = target.read_bytes()
+            self.send_response(200)
+            self.send_header('Content-Type', content_type)
+            self.send_header('Content-Length', str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+        else:
+            self.send_error(404, f"File {self.path} not found")
 class Dashboard(BaseHTTPRequestHandler):
     def do_POST(self):
         if self.path != "/scan":
