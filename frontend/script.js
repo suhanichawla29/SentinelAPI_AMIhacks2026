@@ -1,96 +1,55 @@
-﻿async function fetchReport(){
-  try{
-    const res = await fetch('/report');
-    if(!res.ok) throw new Error('No report');
-    return await res.json();
-  }catch(e){
-    return null;
-  }
+﻿let activeScan = null;
+
+const byId = id => document.getElementById(id);
+function valueOf(...ids) { const el = ids.map(byId).find(Boolean); return el ? el.value : ''; }
+function setText(ids, text) { ids.map(byId).filter(Boolean).forEach(el => el.textContent = text); }
+function badge(text, className = '') {
+  const el = document.createElement('span'); el.className = `badge ${className}`; el.textContent = text || '—'; return el;
 }
 
-function setBadge(el, status){
-  el.className = 'status badge';
-  if(status==='PASS') { el.classList.add('pass'); el.textContent='PASS' }
-  else if(status==='VULNERABLE') { el.classList.add('vul'); el.textContent='VULNERABLE' }
-  else { el.classList.add('amber'); el.textContent=status }
+function renderReport(data) {
+  activeScan = data;
+  const checks = Array.isArray(data?.checks) ? data.checks : [];
+  const overall = String(data?.overall_result || data?.status || (checks.some(c => c.status === 'VULNERABLE') ? 'VULNERABLE' : 'PASS')).toUpperCase();
+  const overallEl = byId('overall-badge');
+  if (overallEl) { overallEl.className = 'status badge ' + (overall === 'PASS' ? 'pass' : overall === 'VULNERABLE' ? 'vul' : 'amber'); overallEl.textContent = overall; }
+  setText(['timestamp', 'checked-at', 'checked_at_utc'], data?.checked_at_utc || data?.timestamp || new Date().toISOString());
+  setText(['tests-run'], checks.length || '—');
+  setText(['passed'], checks.filter(c => c.status === 'PASS').length);
+  setText(['vulns'], checks.filter(c => c.status === 'VULNERABLE').length);
+  const results = byId('results'); if (!results) return;
+  results.innerHTML = '';
+  checks.forEach(check => {
+    const card = document.createElement('article'); card.className = 'audit-card panel';
+    const heading = document.createElement('h3'); heading.textContent = check.name || 'Unnamed check';
+    const priority = badge(String(check.priority || data.priority || 'NORMAL').toUpperCase(), 'priority');
+    const status = badge(String(check.status || 'INCONCLUSIVE').toUpperCase(), String(check.status || '').toLowerCase());
+    const explanation = document.createElement('p'); explanation.textContent = check.explanation || '';
+    const fix = document.createElement('p'); fix.textContent = `Suggested fix: ${check.suggested_fix || check.recommendation || 'No recommendation provided.'}`;
+    card.append(heading, priority, status, explanation, fix); results.appendChild(card);
+  });
 }
 
-function createRow(check){
-  const row = document.createElement('div'); row.className='row';
-  const name = document.createElement('div'); name.className='col'; name.textContent = check.name;
-  const expl = document.createElement('div'); expl.className='col'; expl.textContent = check.explanation || '';
-  const status = document.createElement('div'); status.className='col small';
-  const badge = document.createElement('span'); badge.className='badge';
-  badge.textContent = check.status;
-  if(check.status==='PASS') badge.classList.add('pass');
-  else if(check.status==='VULNERABLE') badge.classList.add('vul');
-  else badge.classList.add('inc');
-  status.appendChild(badge);
-
-  const httpc = document.createElement('div'); httpc.className='col small'; httpc.textContent = check.status_code || '—';
-  row.appendChild(name); row.appendChild(status); row.appendChild(httpc); row.appendChild(expl);
-  return row;
-}
-
-function render(report){
-  if(!report){
-    document.getElementById('results').innerHTML = '<div class="panel">No report available. Run a scan.</div>';
-    document.getElementById('overall-badge').textContent='INCONCLUSIVE';
-    return;
-  }
-  const overall = (report.overall_result||'INCONCLUSIVE').toUpperCase();
-  const checks = Array.isArray(report.checks)?report.checks:[];
-  const total = checks.length;
-  const passed = checks.filter(c=>c.status==='PASS').length;
-  const vulns = checks.filter(c=>c.status==='VULNERABLE').length;
-  document.getElementById('tests-run').textContent = total||'—';
-  document.getElementById('passed').textContent = passed;
-  document.getElementById('vulns').textContent = vulns;
-  setBadge(document.getElementById('overall-badge'), overall);
-
-  const results = document.getElementById('results'); results.innerHTML='';
-  checks.forEach(c=> results.appendChild(createRow(c)));
-
-  // Issue panel
-  const issuePanel = document.getElementById('issue-panel');
-  if(vulns>0){
-    issuePanel.className='issue vul';
-    issuePanel.innerHTML = '<strong>Vulnerability Detected</strong><div>Broken Object Level Authorization: the API allowed one authenticated user to access another user\'s order.</div>';
-    document.getElementById('vul-other-status').textContent = checks.find(ch=>ch.name.toLowerCase().includes('other'))?.status_code || '—';
-    document.getElementById('secure-other-status').textContent = checks.find(ch=>ch.name.toLowerCase().includes('other'))?.status_code || '—';
-    issuePanel.classList.remove('hidden');
-  } else if(total>0){
-    issuePanel.className='issue pass';
-    issuePanel.innerHTML = '<strong>Security Check Passed</strong><div>Unauthorized access to another user\'s order was blocked — authorization is working correctly.</div>';
-    issuePanel.classList.remove('hidden');
-  } else {
-    issuePanel.classList.add('hidden');
-  }
-}
-
-async function refresh(){
-  const r = await fetchReport();
-  render(r);
-}
-
-async function runScan(){
-  const btn = document.getElementById('run-scan');
-  btn.disabled = true; btn.textContent='Running...';
-  try{
-    const res = await fetch('/scan', {method:'POST'});
-    // allow server to finish writing report; poll a few times
-    for(let i=0;i<6;i++){
-      await new Promise(s=>setTimeout(s,600));
-      const r = await fetchReport();
-      if(r && r.checked_at_utc) { render(r); break }
+async function runScan() {
+  const btn = byId('run-scan'); if (btn) { btn.disabled = true; btn.textContent = 'Scanning...'; }
+  setText(['scan-status', 'loading-status'], 'Scan in progress…');
+  try {
+    const response = await fetch('/scan', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ target_url: valueOf('target-url', 'target_url', 'target'), priority: valueOf('priority'), custom_token: valueOf('auth-token', 'custom-token', 'custom_token', 'token') }) });
+    if (!response.ok) throw new Error('Unable to start scan');
+    const started = await response.json(); const scanId = started.scan_id;
+    if (!scanId) throw new Error('No scan ID returned');
+    while (true) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      const report = await (await fetch(`/report/${encodeURIComponent(scanId)}`)).json();
+      if (report.status === 'completed' || Array.isArray(report.checks)) { renderReport(report); break; }
     }
-  }catch(e){
-    console.error(e);
-  }finally{
-    btn.disabled=false; btn.textContent='Run Security Scan';
-  }
+    setText(['scan-status', 'loading-status'], 'Scan completed');
+  } catch (error) { setText(['scan-status', 'loading-status'], error.message); }
+  finally { if (btn) { btn.disabled = false; btn.textContent = 'Run Security Scan'; } }
 }
 
-document.getElementById('refresh').addEventListener('click', refresh);
-document.getElementById('run-scan').addEventListener('click', runScan);
-window.addEventListener('load', refresh);
+function downloadReport() { if (!activeScan) return; const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(activeScan, null, 2)], {type:'application/json'})); a.download = 'security-report.json'; a.click(); URL.revokeObjectURL(a.href); }
+function copyRaw() { if (activeScan) navigator.clipboard.writeText(JSON.stringify(activeScan, null, 2)); }
+byId('run-scan')?.addEventListener('click', runScan);
+byId('download-report')?.addEventListener('click', downloadReport);
+byId('copy-raw-json')?.addEventListener('click', copyRaw);
