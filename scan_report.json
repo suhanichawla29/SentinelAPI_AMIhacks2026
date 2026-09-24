@@ -1,9 +1,9 @@
 {
-  "checked_at": "2026-09-24T12:27:06.899659+00:00",
+  "checked_at": "2026-09-24T14:09:51.520874+00:00",
   "check": "Order ownership authorization",
   "request": "GET /orders/202",
   "status_code": 403,
   "result": "PASS",
-  "explanation": "The API blocked access to another user's order.",
+  "explanation": "The API blocked access to another user's order and rejected the missing token.",
   "suggested_fix": null
 }
