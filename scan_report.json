@@ -1,27 +1,62 @@
 {
-  "checked_at_utc": "2026-09-24T21:10:54Z",
-  "overall_result": "PASS",
+  "checked_at_utc": "2026-09-24T21:37:18Z",
+  "overall_result": "VULNERABLE",
   "checks": [
     {
-      "name": "Own order",
-      "status": "PASS",
-      "status_code": 200,
-      "explanation": "The authenticated user successfully retrieved their own order.",
-      "suggested_fix": null
-    },
-    {
-      "name": "Missing token",
+      "name": "Missing Token",
+      "category": "API2:2023 Broken Authentication",
+      "severity": "HIGH",
+      "priority": "HIGH",
       "status": "PASS",
       "status_code": 401,
-      "explanation": "The API rejected the request without an Authorization header.",
-      "suggested_fix": null
+      "explanation": "The API rejected a request without Authorization.",
+      "suggested_fix": "Require a valid Authorization header and return 401 or 403 when it is absent.",
+      "poc_curl": "curl -i 'http://127.0.0.1:8000/orders/101'"
     },
     {
-      "name": "Other user's order",
+      "name": "Invalid Token",
+      "category": "API2:2023 Broken Authentication",
+      "severity": "HIGH",
+      "priority": "HIGH",
+      "status": "PASS",
+      "status_code": 401,
+      "explanation": "The API rejected a forged token.",
+      "suggested_fix": "Validate token signatures, issuer, audience, expiry, and revocation state.",
+      "poc_curl": "curl -i -H 'Authorization: Bearer forged-invalid-token' 'http://127.0.0.1:8000/orders/101'"
+    },
+    {
+      "name": "Cross-user Object Access (BOLA/IDOR)",
+      "category": "API1:2023 Broken Object Level Authorization",
+      "severity": "CRITICAL",
+      "priority": "HIGH",
       "status": "PASS",
       "status_code": 403,
-      "explanation": "The API blocked Asha from reading Ravi's order.",
-      "suggested_fix": null
+      "explanation": "Zero-trust tenancy holds: Asha could not access Ravi's resource (HTTP 403).",
+      "suggested_fix": "Authorize every object access against the authenticated user in the database query and deny cross-user reads.",
+      "poc_curl": "curl -i -H 'Authorization: Bearer asha-demo-token' 'http://127.0.0.1:8000/orders/202'",
+      "ai_reasoning": "Semantic inspection of '/orders/{order_id}' detected an unisolated object identifier parameter. Rather than brute-force fuzzing random integers, SentinelAPI deduces that cross-tenant access between tenant 'asha' and object 'ravi' must be validated to verify zero-trust tenancy boundaries."
+    },
+    {
+      "name": "Sensitive Field Exposure",
+      "category": "API3:2023 Broken Object Property Level Authorization",
+      "severity": "MEDIUM",
+      "priority": "STANDARD",
+      "status": "PASS",
+      "status_code": 200,
+      "explanation": "No configured sensitive fields were found in the valid JSON response.",
+      "suggested_fix": "Return an allowlisted response schema containing only fields required by the client.",
+      "poc_curl": "curl -i -H 'Authorization: Bearer asha-demo-token' 'http://127.0.0.1:8000/orders/101'"
+    },
+    {
+      "name": "Rate Limiting",
+      "category": "API4:2023 Unrestricted Resource Consumption",
+      "severity": "LOW",
+      "priority": "STANDARD",
+      "status": "VULNERABLE",
+      "status_code": 200,
+      "explanation": "No rate-limiting response headers were returned.",
+      "suggested_fix": "Apply authenticated, per-client rate limits and return limit or retry metadata.",
+      "poc_curl": "curl -i -H 'Authorization: Bearer asha-demo-token' 'http://127.0.0.1:8000/orders/101'"
     }
   ]
 }
