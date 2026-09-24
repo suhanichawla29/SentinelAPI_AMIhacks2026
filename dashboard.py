@@ -1,12 +1,42 @@
 import html
 import json
+import subprocess
+import sys
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
-REPORT_FILE = Path(__file__).with_name("scan_report.json")
+ROOT = Path(__file__).resolve().parent
+REPORT_FILE = ROOT / "scan_report.json"
+SCANNER_FILE = ROOT / "Scanner" / "Scan.py"
 
 
 class Dashboard(BaseHTTPRequestHandler):
+    def do_POST(self):
+        if self.path != "/scan":
+            self.send_error(404)
+            return
+
+        try:
+            run = subprocess.run(
+                [sys.executable, str(SCANNER_FILE)],
+                cwd=ROOT,
+                capture_output=True,
+                text=True,
+                timeout=15,
+            )
+            if run.returncode != 0:
+                self.send_error(500, "Scan failed; check the dashboard terminal")
+                print("Scan failed:", run.stdout, run.stderr)
+                return
+            print(run.stdout)
+        except subprocess.TimeoutExpired:
+            self.send_error(504, "Scan timed out; check the dashboard terminal")
+            return
+
+        self.send_response(303)
+        self.send_header("Location", "/")
+        self.end_headers()
+
     def do_GET(self):
         if self.path != "/":
             self.send_error(404)
@@ -18,7 +48,7 @@ class Dashboard(BaseHTTPRequestHandler):
             report = {
                 "result": "NO REPORT",
                 "check": "Run the scanner first",
-                "explanation": "Run python Scanner/Scan.py, then refresh this page.",
+                "explanation": "Start the sandbox API, then click Run scan.",
                 "suggested_fix": None,
                 "status_code": "—",
                 "checked_at": "—",
@@ -51,7 +81,8 @@ class Dashboard(BaseHTTPRequestHandler):
             .label {{ color: #94a3b8; font-size: 14px; margin-bottom: 7px; }}
             .value {{ font-size: 19px; margin-bottom: 24px; }}
             button {{ background: #38bdf8; border: 0; padding: 12px 18px;
-                      border-radius: 8px; font-weight: bold; cursor: pointer; }}
+                      border-radius: 8px; font-weight: bold; cursor: pointer;
+                      margin-right: 8px; }}
           </style>
         </head>
         <body>
@@ -67,6 +98,9 @@ class Dashboard(BaseHTTPRequestHandler):
               <div class="label">HTTP status</div><div class="value">{safe("status_code")}</div>
               <div class="label">Suggested fix</div><div class="value">{safe("suggested_fix")}</div>
               <div class="label">Checked at (UTC)</div><div class="value">{safe("checked_at")}</div>
+              <form action="/scan" method="post" style="display: inline">
+                <button type="submit">Run scan</button>
+              </form>
               <button onclick="location.reload()">Refresh result</button>
             </div>
           </main>
