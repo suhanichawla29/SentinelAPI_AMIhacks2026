@@ -14,7 +14,6 @@
       --text-main: #f1f5f9;
       --text-muted: #94a3b8;
       
-      /* Vibrant Accent Palette */
       --accent-emerald: #10b981;
       --accent-emerald-glow: rgba(16, 185, 129, 0.2);
       --accent-violet: #8b5cf6;
@@ -34,10 +33,10 @@
       flex-direction: column;
     }
 
-    /* Modern Navbar */
+    /* Navbar */
     .navbar {
       height: 64px;
-      background: rgba(19, 27, 38, 0.85);
+      background: rgba(19, 27, 38, 0.9);
       backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border);
       display: flex;
@@ -55,49 +54,47 @@
       gap: 0.75rem;
       font-weight: 700;
       font-size: 1.15rem;
-      letter-spacing: -0.3px;
       color: var(--text-main);
+      text-decoration: none;
     }
 
     .brand-icon {
-      width: 28px;
-      height: 28px;
+      width: 30px;
+      height: 30px;
       background: linear-gradient(135deg, var(--accent-emerald), var(--accent-violet));
       border-radius: 6px;
       display: flex;
       align-items: center;
       justify-content: center;
       color: #fff;
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       font-weight: 800;
       box-shadow: 0 0 16px var(--accent-emerald-glow);
     }
 
     .nav-links {
       display: flex;
+      align-items: center;
       gap: 1.5rem;
       list-style: none;
-      font-size: 0.9rem;
-      font-weight: 500;
     }
 
     .nav-links a {
       color: var(--text-muted);
       text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
       transition: color 0.15s ease;
+      cursor: pointer;
     }
 
     .nav-links a:hover, .nav-links a.active {
       color: var(--accent-emerald);
     }
 
-    .nav-actions {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    /* Main Container */
     .container {
       max-width: 1050px;
       width: 100%;
@@ -108,7 +105,6 @@
       gap: 1.5rem;
     }
 
-    /* Cards */
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -119,7 +115,7 @@
 
     .overview-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 1.25rem;
       margin-bottom: 1.5rem;
     }
@@ -148,7 +144,6 @@
       color: var(--text-main);
     }
 
-    /* Badges */
     .badge {
       display: inline-flex;
       align-items: center;
@@ -190,13 +185,13 @@
     }
     .status-inconclusive::before { background: var(--accent-amber); }
 
-    /* Action Buttons */
     .btn-group {
       display: flex;
+      flex-wrap: wrap;
       gap: 0.75rem;
     }
 
-    button {
+    button, .action-btn {
       background: linear-gradient(135deg, var(--accent-emerald), #059669);
       color: #fff;
       border: none;
@@ -210,25 +205,25 @@
       gap: 0.5rem;
       transition: all 0.2s ease;
       box-shadow: 0 2px 8px var(--accent-emerald-glow);
+      text-decoration: none;
     }
 
-    button:hover {
+    button:hover, .action-btn:hover {
       opacity: 0.95;
       transform: translateY(-1px);
     }
 
-    button.secondary {
+    button.secondary, .action-btn.secondary {
       background: var(--surface-elevated);
       color: var(--text-main);
       border: 1px solid var(--border-light);
       box-shadow: none;
     }
 
-    button.secondary:hover {
+    button.secondary:hover, .action-btn.secondary:hover {
       background: var(--border);
     }
 
-    /* Check Cards */
     .card-title-row {
       display: flex;
       justify-content: space-between;
@@ -250,11 +245,6 @@
       border-radius: 8px;
       padding: 1.25rem;
       margin-top: 0.85rem;
-      transition: border-color 0.2s ease;
-    }
-
-    .check-card:hover {
-      border-color: var(--border-light);
     }
 
     .check-header {
@@ -317,29 +307,73 @@
       overflow-x: auto;
       font-family: ui-monospace, monospace;
     }
+
+    /* Fullscreen Raw JSON Modal */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+    }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      max-width: 800px;
+      width: 100%;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+      overflow-y: auto;
+      background: var(--bg-dark);
+      flex: 1;
+    }
+
+    .modal-body pre {
+      color: var(--accent-cyan);
+      font-size: 0.85rem;
+    }
   </style>
 </head>
 <body>
 
-  <!-- Top Navigation Bar -->
+  <!-- Top Navbar -->
   <nav class="navbar">
-    <div class="brand">
+    <a href="/" class="brand">
       <div class="brand-icon">S</div>
       <span>SentinelAPI</span>
-    </div>
+    </a>
     <ul class="nav-links">
-      <li><a href="/" class="active">Dashboard</a></li>
-      <li><a href="/report" target="_blank">Raw JSON</a></li>
-      <li><a href="https://github.com" target="_blank">GitHub</a></li>
+      <li><a href="/" class="active">📊 Dashboard</a></li>
+      <li><a onclick="openJsonModal()">🔍 Raw JSON View</a></li>
+      <li><a href="/report" target="_blank">🌐 Endpoint (/report)</a></li>
+      <li><a href="https://github.com/suhanichawla29/SentinelAPI_AMIhacks2026" target="_blank">📦 GitHub Repo</a></li>
     </ul>
-    <div class="nav-actions">
-      <button class="secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="fetchReport()">Sync</button>
-    </div>
   </nav>
 
-  <!-- Content Body -->
+  <!-- Main Container -->
   <div class="container">
     
+    <!-- Top KPI Card -->
     <div class="card">
       <div class="overview-grid">
         <div class="stat-tile">
@@ -347,14 +381,18 @@
           <span id="checked-at" class="stat-val">—</span>
         </div>
         <div class="stat-tile">
-          <span class="stat-label">Scan Health</span>
+          <span class="stat-label">Security Health</span>
           <div style="margin-top: 4px;">
             <span id="overall-badge" class="badge status-inconclusive">LOADING</span>
           </div>
         </div>
         <div class="stat-tile">
-          <span class="stat-label">Active Engine</span>
+          <span class="stat-label">Backend Engine</span>
           <span class="stat-val" style="color: var(--accent-violet); font-size: 0.95rem;">Scanner/Scan.py</span>
+        </div>
+        <div class="stat-tile">
+          <span class="stat-label">Report Source</span>
+          <span class="stat-val" style="color: var(--accent-cyan); font-size: 0.95rem;">scan_report.json</span>
         </div>
       </div>
 
@@ -365,19 +403,45 @@
         <button class="secondary" onclick="fetchReport()">
           <span>↻ Refresh Result</span>
         </button>
+        <button class="secondary" onclick="openJsonModal()">
+          <span>📄 View Raw JSON</span>
+        </button>
+        <button class="secondary" onclick="downloadJson()">
+          <span>⬇ Download Report</span>
+        </button>
       </div>
     </div>
 
+    <!-- Findings Section -->
     <div class="card">
       <div class="card-title-row">
         <span class="card-title">Security Verifications & Audit Trail</span>
+        <span id="checks-count" style="font-size: 0.85rem; color: var(--text-muted);">0 checks</span>
       </div>
       <div id="checks-container">Loading checks...</div>
     </div>
 
   </div>
 
+  <!-- Raw JSON Modal -->
+  <div id="json-modal" class="modal-backdrop" onclick="closeJsonModal(event)">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 style="font-size: 1rem; color: var(--text-main);">Raw scan_report.json Output</h3>
+        <div style="display: flex; gap: 0.5rem;">
+          <button class="secondary" style="padding: 0.35rem 0.75rem; font-size: 0.78rem;" onclick="copyJsonToClipboard()">Copy JSON</button>
+          <button class="secondary" style="padding: 0.35rem 0.75rem; font-size: 0.78rem;" onclick="closeModal()">Close</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <pre id="modal-json-pre">Loading JSON...</pre>
+      </div>
+    </div>
+  </div>
+
   <script>
+    let currentReport = null;
+
     function renderCheckCard(c) {
       const status = (c.status || c.result || 'INFO').toUpperCase();
       const statusClass = status === 'PASS' ? 'status-pass' : status === 'FAIL' ? 'status-fail' : 'status-inconclusive';
@@ -434,12 +498,12 @@
     async function fetchReport() {
       try {
         const res = await fetch('/report');
-        const data = await res.json();
+        currentReport = await res.json();
         
-        document.getElementById('checked-at').textContent = data.checked_at_utc || '—';
+        document.getElementById('checked-at').textContent = currentReport.checked_at_utc || '—';
         
         const badge = document.getElementById('overall-badge');
-        const status = (data.overall_result || 'INCONCLUSIVE').toUpperCase();
+        const status = (currentReport.overall_result || 'INCONCLUSIVE').toUpperCase();
         badge.textContent = status;
         badge.className = 'badge ' + (
           status === 'PASS' ? 'status-pass' :
@@ -447,13 +511,20 @@
         );
 
         const container = document.getElementById('checks-container');
-        if (data.checks && data.checks.length > 0) {
-          container.innerHTML = data.checks.map(renderCheckCard).join('');
-        } else if (data.error) {
-          container.innerHTML = `<p style="color: var(--accent-rose); font-weight: 500;">${data.error}</p>`;
+        const countSpan = document.getElementById('checks-count');
+
+        if (currentReport.checks && currentReport.checks.length > 0) {
+          countSpan.textContent = `${currentReport.checks.length} checks performed`;
+          container.innerHTML = currentReport.checks.map(renderCheckCard).join('');
+        } else if (currentReport.error) {
+          countSpan.textContent = '0 checks';
+          container.innerHTML = `<p style="color: var(--accent-rose); font-weight: 500;">${currentReport.error}</p>`;
         } else {
+          countSpan.textContent = '0 checks';
           container.innerHTML = '<p style="color: var(--text-muted);">No scan checks recorded in scan_report.json.</p>';
         }
+
+        document.getElementById('modal-json-pre').textContent = JSON.stringify(currentReport, null, 2);
       } catch (err) {
         document.getElementById('checks-container').innerHTML = '<p style="color: var(--accent-rose);">Error communicating with report endpoint.</p>';
       }
@@ -472,6 +543,38 @@
         btn.innerHTML = '<span>⚡ Run Security Scan</span>';
         btn.disabled = false;
       }
+    }
+
+    function openJsonModal() {
+      document.getElementById('json-modal').style.display = 'flex';
+      if (currentReport) {
+        document.getElementById('modal-json-pre').textContent = JSON.stringify(currentReport, null, 2);
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('json-modal').style.display = 'none';
+    }
+
+    function closeJsonModal(e) {
+      if (e.target.id === 'json-modal') closeModal();
+    }
+
+    function copyJsonToClipboard() {
+      if (!currentReport) return;
+      navigator.clipboard.writeText(JSON.stringify(currentReport, null, 2));
+      alert('JSON copied to clipboard!');
+    }
+
+    function downloadJson() {
+      if (!currentReport) return;
+      const blob = new Blob([JSON.stringify(currentReport, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `scan_report_${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
     }
 
     fetchReport();
