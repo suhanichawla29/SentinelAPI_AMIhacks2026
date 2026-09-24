@@ -1,9 +1,9 @@
 {
-  "checked_at": "2026-09-24T11:47:41.742888+00:00",
+  "checked_at": "2026-09-24T11:56:03.296619+00:00",
   "check": "Order ownership authorization",
-  "request": "Asha requests Ravi's order 202",
+  "request": "GET /orders/202",
   "status_code": 200,
   "result": "VULNERABLE",
-  "explanation": "Asha could read Ravi's order.",
+  "explanation": "The test user could read another user's order.",
   "suggested_fix": "Check that the order belongs to the authenticated user before returning it."
 }
