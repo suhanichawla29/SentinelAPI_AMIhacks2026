@@ -22,23 +22,27 @@ try:
     ):
         print("INCONCLUSIVE: The test user could not read their own order.")
         raise SystemExit(1)
-
+    no_token_response = httpx.get(own_url, timeout=5)
     response = httpx.get(other_url, headers=headers, timeout=5)
 
-    if (
+    if no_token_response.status_code == 200:
+        result = "VULNERABLE"
+        explanation = "The API returned an order without a token."
+        fix = "Require authentication before returning an order."
+    elif (
         response.status_code == 200
         and response.json().get("owner") == config["other_user"]
     ):
         result = "VULNERABLE"
         explanation = "The test user could read another user's order."
         fix = "Check that the order belongs to the authenticated user before returning it."
-    elif response.status_code == 403:
+    elif response.status_code == 403 and no_token_response.status_code == 401:
         result = "PASS"
-        explanation = "The API blocked access to another user's order."
+        explanation = "The API blocked access to another user's order and rejected the missing token."
         fix = None
     else:
         result = "INCONCLUSIVE"
-        explanation = f"Unexpected response: {response.text[:200]}"
+        explanation = f"Unexpected responses: order {response.status_code}, no token {no_token_response.status_code}"
         fix = None
 
     report = {
