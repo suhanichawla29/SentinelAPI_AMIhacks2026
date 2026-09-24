@@ -1,20 +1,42 @@
+import json
+from datetime import datetime, timezone
+
 import httpx
 
-URL = "http://127.0.0.1:8000/orders/202"
-HEADERS = {"Authorization": "Bearer asha-demo-token"}
+url = "http://127.0.0.1:8000/orders/202"
+headers = {"Authorization": "Bearer asha-demo-token"}
 
 try:
-    response = httpx.get(URL, headers=HEADERS, timeout=5)
-    print(f"Request: Asha accessing Ravi's order (202)")
-    print(f"Status: {response.status_code}")
+    response = httpx.get(url, headers=headers, timeout=5)
 
     if response.status_code == 200 and response.json().get("owner") == "ravi":
-        print("VULNERABILITY FOUND: Asha can read Ravi's order.")
-        print("Evidence:", response.json())
+        result = "VULNERABLE"
+        explanation = "Asha could read Ravi's order."
+        fix = "Check that the order belongs to the authenticated user before returning it."
     elif response.status_code == 403:
-        print("PASS: API blocked access to Ravi's order.")
+        result = "PASS"
+        explanation = "The API blocked Asha from reading Ravi's order."
+        fix = None
     else:
-        print("INCONCLUSIVE: Unexpected response:", response.text)
+        result = "INCONCLUSIVE"
+        explanation = f"Unexpected response: {response.text[:200]}"
+        fix = None
 
-except httpx.RequestError as error:
-    print("Could not reach the sandbox API:", error)
+    report = {
+        "checked_at": datetime.now(timezone.utc).isoformat(),
+        "check": "Order ownership authorization",
+        "request": "Asha requests Ravi's order 202",
+        "status_code": response.status_code,
+        "result": result,
+        "explanation": explanation,
+        "suggested_fix": fix,
+    }
+
+    with open("scan_report.json", "w", encoding="utf-8") as file:
+        json.dump(report, file, indent=2)
+
+    print(f"{result}: {explanation}")
+    print("Report saved to scan_report.json")
+
+except (httpx.RequestError, ValueError) as error:
+    print("Scan could not complete:", error)
