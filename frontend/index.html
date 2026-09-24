@@ -4,67 +4,136 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SentinelAPI Security Dashboard</title>
-  <link rel="stylesheet" href="style.css" />
   <style>
-    body { font-family: system-ui, -apple-system, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 2rem; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0d1117;
+      color: #c9d1d9;
+      margin: 0;
+      padding: 2rem;
+    }
     .container { max-width: 900px; margin: 0 auto; }
-    .card { background: #1e293b; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); }
-    h1 { color: #38bdf8; margin-top: 0; }
-    .btn { background: #0284c7; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 0.5rem; }
-    .btn:hover { background: #0369a1; }
-    .badge { padding: 0.3rem 0.6rem; border-radius: 4px; font-weight: bold; font-size: 0.9rem; }
-    .status-pass { background: #15803d; }
-    .status-inconclusive { background: #b45309; }
-    .status-fail { background: #b91c1c; }
-    pre { background: #020617; padding: 1rem; border-radius: 6px; overflow-x: auto; color: #a5f3fc; }
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    h1 { color: #58a6ff; margin-top: 0; font-size: 1.6rem; }
+    h2 { color: #f0f6fc; font-size: 1.2rem; margin-top: 0; border-bottom: 1px solid #21262d; padding-bottom: 0.5rem; }
+    .meta-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+    .label { font-weight: 600; color: #8b949e; }
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+    }
+    .status-pass { background: #238636; color: #fff; }
+    .status-inconclusive { background: #d29922; color: #fff; }
+    .status-fail { background: #da3633; color: #fff; }
+    .btn-group { display: flex; gap: 0.75rem; margin-top: 1rem; }
+    button {
+      background: #238636;
+      color: #fff;
+      border: 1px solid rgba(240, 246, 252, 0.1);
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button.secondary { background: #21262d; }
+    button:hover { opacity: 0.9; }
+    .check-card {
+      background: #0d1117;
+      border: 1px solid #21262d;
+      border-radius: 6px;
+      padding: 1rem;
+      margin-top: 0.75rem;
+    }
+    .check-header { display: flex; justify-content: space-between; align-items: center; }
+    .check-title { font-weight: 600; color: #e6edf3; }
+    .check-desc { color: #8b949e; font-size: 0.9rem; margin: 0.5rem 0 0 0; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="card">
       <h1>SentinelAPI Scanner Dashboard</h1>
-      <p>Status: <span id="overall-status" class="badge status-inconclusive">LOADING</span></p>
-      <p>Last Checked (UTC): <strong id="last-checked">—</strong></p>
-      <button class="btn" onclick="runScan()">Run Scan</button>
-      <button class="btn" onclick="fetchReport()">Refresh Report</button>
+      <div class="meta-row">
+        <div>
+          <span class="label">Checked at (UTC): </span>
+          <span id="checked-at" style="color: #e6edf3; font-weight: 500;">—</span>
+        </div>
+        <div>
+          <span class="label">Overall Result: </span>
+          <span id="overall-badge" class="badge status-inconclusive">LOADING</span>
+        </div>
+      </div>
+      <div class="btn-group">
+        <button id="scan-btn" onclick="runScan()">Run scan</button>
+        <button class="secondary" onclick="fetchReport()">Refresh result</button>
+      </div>
     </div>
 
     <div class="card">
-      <h2>Scan Details</h2>
-      <pre id="report-output">Fetching report...</pre>
+      <h2>Scan Checks</h2>
+      <div id="checks-container">No checks recorded yet.</div>
     </div>
   </div>
 
-  <script src="script.js"></script>
   <script>
     async function fetchReport() {
       try {
         const res = await fetch('/report');
         const data = await res.json();
-        document.getElementById('last-checked').textContent = data.checked_at_utc || '—';
-        const badge = document.getElementById('overall-status');
-        badge.textContent = data.overall_result || 'UNKNOWN';
+        
+        document.getElementById('checked-at').textContent = data.checked_at_utc || '—';
+        
+        const badge = document.getElementById('overall-badge');
+        const status = (data.overall_result || 'INCONCLUSIVE').toUpperCase();
+        badge.textContent = status;
         badge.className = 'badge ' + (
-          data.overall_result === 'PASS' ? 'status-pass' :
-          data.overall_result === 'FAIL' ? 'status-fail' : 'status-inconclusive'
+          status === 'PASS' ? 'status-pass' :
+          status === 'FAIL' ? 'status-fail' : 'status-inconclusive'
         );
-        document.getElementById('report-output').textContent = JSON.stringify(data, null, 2);
+
+        const container = document.getElementById('checks-container');
+        if (data.checks && data.checks.length > 0) {
+          container.innerHTML = data.checks.map(c => `
+            <div class="check-card">
+              <div class="check-header">
+                <span class="check-title">${c.name || 'Check'}</span>
+                <span class="badge ${c.status === 'PASS' ? 'status-pass' : c.status === 'FAIL' ? 'status-fail' : 'status-inconclusive'}">${c.status || 'INFO'}</span>
+              </div>
+              ${c.details ? `<p class="check-desc">${c.details}</p>` : ''}
+            </div>
+          `).join('');
+        } else if (data.error) {
+          container.innerHTML = `<p style="color: #f85149;">${data.error}</p>`;
+        } else {
+          container.innerHTML = '<p style="color: #8b949e;">No scan checks found in report.</p>';
+        }
       } catch (err) {
-        document.getElementById('report-output').textContent = 'Error loading report: ' + err;
+        document.getElementById('checks-container').innerHTML = '<p style="color: #f85149;">Error loading scan report.</p>';
       }
     }
 
     async function runScan() {
-      const btn = event.target;
-      btn.textContent = 'Scanning...';
+      const btn = document.getElementById('scan-btn');
+      btn.textContent = 'Running...';
       btn.disabled = true;
       try {
         await fetch('/scan', { method: 'POST' });
         await fetchReport();
-      } catch (err) {
-        alert('Scan failed: ' + err);
+      } catch (e) {
+        alert('Scan trigger failed');
       } finally {
-        btn.textContent = 'Run Scan';
+        btn.textContent = 'Run scan';
         btn.disabled = false;
       }
     }
