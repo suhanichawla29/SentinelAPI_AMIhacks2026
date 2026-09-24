@@ -1,9 +1,27 @@
 {
-  "checked_at": "2026-09-24T14:17:26.989327+00:00",
-  "check": "Order ownership authorization",
-  "request": "GET /orders/202",
-  "status_code": 200,
-  "result": "VULNERABLE",
-  "explanation": "The test user could read another user's order.",
-  "suggested_fix": "Check that the order belongs to the authenticated user before returning it."
+  "checked_at_utc": "2026-09-24T16:33:30Z",
+  "overall_result": "VULNERABLE",
+  "checks": [
+    {
+      "name": "Own order",
+      "status": "PASS",
+      "status_code": 200,
+      "explanation": "The authenticated user successfully retrieved their own order.",
+      "suggested_fix": null
+    },
+    {
+      "name": "Missing token",
+      "status": "PASS",
+      "status_code": 401,
+      "explanation": "The API rejected the request without an Authorization header.",
+      "suggested_fix": null
+    },
+    {
+      "name": "Other user's order",
+      "status": "VULNERABLE",
+      "status_code": 200,
+      "explanation": "Asha's token successfully returned Ravi's order.",
+      "suggested_fix": "Check the order owner against the authenticated user before returning any order record."
+    }
+  ]
 }

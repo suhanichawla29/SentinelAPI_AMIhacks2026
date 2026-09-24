@@ -1,10 +1,23 @@
-import os
+﻿import os
 
-from fastapi import FastAPI, HTTPException, Security
+from fastapi import FastAPI, HTTPException, Request, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 app = FastAPI(title="SentinelAPI Sandbox Orders API")
-bearer = HTTPBearer()
+
+
+class DemoBearerAuth(HTTPBearer):
+    async def __call__(self, request: Request):
+        try:
+            return await super().__call__(request)
+        except HTTPException as exc:
+            raise HTTPException(
+                status_code=401,
+                detail="Missing or invalid Authorization header",
+            ) from exc
+
+
+bearer = DemoBearerAuth()
 
 # Fictional test data only. These are demo tokens, not real credentials.
 USERS = {
