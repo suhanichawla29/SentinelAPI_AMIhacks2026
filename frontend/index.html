@@ -223,6 +223,15 @@
       const sev = (c.severity || 'HIGH').toUpperCase();
       const sevClass = 'sev-' + sev.toLowerCase();
 
+      // AI Reasoning callout block
+      const aiReasoningHtml = c.ai_reasoning ? `
+        <div style="background: rgba(139, 92, 246, 0.12); border-left: 3px solid var(--accent-violet); padding: 8px 12px; font-size: 13px; color: #ddd6fe; border-radius: 0 6px 6px 0; margin-bottom: 12px;">
+          <strong style="color: #a78bfa;">🧠 AI Semantic Reasoner:</strong> ${c.ai_reasoning}
+        </div>
+      ` : '';
+
+      const safeCurl = (c.poc_curl || '').replace(/'/g, "\\'");
+
       return `
         <div class="finding-card ${isVuln ? 'finding-vuln' : ''}">
           <div class="finding-header">
@@ -235,6 +244,7 @@
           </div>
 
           <div class="finding-body">
+            ${aiReasoningHtml}
             <p class="finding-explanation">${c.explanation || 'No verification narrative available.'}</p>
             ${c.suggested_fix ? `
               <div class="suggested-fix-box">
@@ -249,9 +259,9 @@
             ${c.poc_curl ? `
               <details class="poc-collapsible">
                 <summary>Reproduce with cURL</summary>
-                <div class="poc-wrapper">
-                  <pre><code>${c.poc_curl}</code></pre>
-                  <button class="copy-poc-btn" onclick="navigator.clipboard.writeText('${c.poc_curl.replace(/'/g, "\\'")}'); alert('cURL copied!');">Copy</button>
+                <div class="poc-wrapper" style="position: relative; padding-right: 70px;">
+                  <pre style="margin: 0; overflow-x: auto;"><code>${c.poc_curl}</code></pre>
+                  <button class="copy-poc-btn" onclick="navigator.clipboard.writeText('${safeCurl}'); alert('cURL copied!');">Copy</button>
                 </div>
               </details>
             ` : ''}
@@ -271,7 +281,7 @@
       badge.textContent = status;
       badge.className = 'cyber-badge ' + (isVuln ? 'badge-fail' : 'badge-pass');
 
-      // Update 3D Shield reaction
+      // Update 3D Shield reaction (Crimson for vulnerable, Emerald for clean)
       update3DColor(isVuln ? 0xf43f5e : 0x10b981);
 
       const checks = data.checks || [];

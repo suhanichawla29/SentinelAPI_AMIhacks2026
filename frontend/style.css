@@ -434,7 +434,7 @@ body {
   margin-top: 8px;
   position: relative;
   background: #000000;
-  padding: 12px;
+  padding: 12px 60px 12px 12px; /* Add right padding so text doesn't hide under the button */
   border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
