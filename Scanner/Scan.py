@@ -3,10 +3,9 @@ from datetime import datetime, timezone
 
 import httpx
 
-url = "http://127.0.0.1:8000/orders/202"
 headers = {"Authorization": "Bearer asha-demo-token"}
 
-    try:
+try:
     own_order = httpx.get(
         "http://127.0.0.1:8000/orders/101",
         headers=headers,
@@ -17,11 +16,11 @@ headers = {"Authorization": "Bearer asha-demo-token"}
         print("INCONCLUSIVE: Asha cannot access her own order. Check the API or token.")
         raise SystemExit(1)
 
-    response = httpx.get(url, headers=headers, timeout=5)
-
-    if response.status_code == 200 and response.json().get("owner") == "ravi":
-        
-    response = httpx.get(url, headers=headers, timeout=5)
+    response = httpx.get(
+        "http://127.0.0.1:8000/orders/202",
+        headers=headers,
+        timeout=5,
+    )
 
     if response.status_code == 200 and response.json().get("owner") == "ravi":
         result = "VULNERABLE"
