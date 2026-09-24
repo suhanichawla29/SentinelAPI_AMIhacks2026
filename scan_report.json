@@ -1,0 +1,9 @@
+{
+  "checked_at": "2026-09-24T11:16:38.400252+00:00",
+  "check": "Order ownership authorization",
+  "request": "Asha requests Ravi's order 202",
+  "status_code": 403,
+  "result": "PASS",
+  "explanation": "The API blocked Asha from reading Ravi's order.",
+  "suggested_fix": null
+}
