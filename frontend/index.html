@@ -1,27 +1,373 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SentinelAPI | Zero-Trust Scanner</title>
-  <style>
-    :root{--bg-dark:#0b0f17;--surface:#131b26;--surface-elevated:#1a2433;--border:#263449;--text-main:#f1f5f9;--text-muted:#94a3b8;--accent-emerald:#10b981;--accent-emerald-glow:rgba(16,185,129,.2);--accent-violet:#8b5cf6;--accent-amber:#f59e0b;--accent-rose:#f43f5e;--accent-cyan:#06b6d4}
-    *{box-sizing:border-box}body{margin:0;min-height:100vh;color:var(--text-main);background:radial-gradient(circle at 90% 0%,rgba(139,92,246,.14),transparent 30rem),var(--bg-dark);font:15px/1.5 "Segoe UI",system-ui,sans-serif}button,input,select{font:inherit}button{cursor:pointer}
-    .navbar{min-height:68px;padding:0 5vw;display:flex;align-items:center;justify-content:space-between;gap:1.5rem;border-bottom:1px solid var(--border);background:rgba(19,27,38,.88);backdrop-filter:blur(14px);position:sticky;top:0;z-index:5}.brand,.nav-links a{color:var(--text-main);text-decoration:none}.brand{display:inline-flex;align-items:center;gap:.7rem;font-weight:750}.brand-icon{display:grid;place-items:center;width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--accent-emerald),var(--accent-violet));font-weight:900;box-shadow:0 0 22px var(--accent-emerald-glow)}.nav-links{display:flex;align-items:center;gap:1.15rem;list-style:none;margin:0;padding:0}.nav-links a{color:var(--text-muted);font-size:.88rem}.nav-links a:hover{color:var(--accent-emerald)}
-    main{width:min(1160px,90vw);margin:2.5rem auto 4rem}.eyebrow{color:var(--accent-emerald);text-transform:uppercase;letter-spacing:.14em;font-size:.72rem;font-weight:800}h1{margin:.35rem 0 .5rem;font-size:clamp(1.8rem,4vw,3rem);letter-spacing:-.03em}.lede{max-width:680px;color:var(--text-muted);margin:0 0 1.7rem}.panel{background:rgba(19,27,38,.94);border:1px solid var(--border);border-radius:14px;box-shadow:0 18px 45px rgba(0,0,0,.2)}.probe-deck,.findings-panel{padding:1.25rem}.field-grid{display:grid;grid-template-columns:1.2fr 1.2fr .8fr;gap:1rem;margin-top:1rem}label{display:grid;gap:.42rem;color:var(--text-muted);font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em}input,select{width:100%;min-height:44px;padding:.65rem .75rem;color:var(--text-main);background:var(--bg-dark);border:1px solid var(--border);border-radius:8px;outline:none}input:focus,select:focus{border-color:var(--accent-emerald);box-shadow:0 0 0 3px var(--accent-emerald-glow)}.actions{display:flex;flex-wrap:wrap;gap:.65rem;margin-top:1.1rem}button{min-height:42px;padding:.6rem .9rem;border:1px solid var(--border);border-radius:8px;color:var(--text-main);background:var(--surface-elevated);font-weight:700}button:hover{border-color:var(--accent-emerald);transform:translateY(-1px)}button.primary{color:#042f25;background:var(--accent-emerald);border-color:var(--accent-emerald);box-shadow:0 6px 18px var(--accent-emerald-glow)}button:disabled{cursor:wait;opacity:.65;transform:none}.status-line{min-height:1.5em;color:var(--text-muted);margin-top:.75rem}
-    .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:.85rem;margin:1.25rem 0 2rem}.metric{padding:1rem 1.1rem;background:var(--surface);border:1px solid var(--border);border-radius:10px}.metric-label{display:block;color:var(--text-muted);font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.metric-value{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:.4rem;font-size:1.1rem;font-weight:750}.section-heading{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;padding-bottom:.8rem;border-bottom:1px solid var(--border)}h2{margin:0;font-size:1.15rem}.muted{color:var(--text-muted)}#findings{display:grid;gap:.8rem;margin-top:1rem}.finding{padding:1rem;background:var(--surface-elevated);border:1px solid var(--border);border-left:3px solid var(--border);border-radius:9px}.finding.critical{border-left-color:#ff1744}.finding.high{border-left-color:#fb7185}.finding.medium{border-left-color:var(--accent-amber)}.finding.low{border-left-color:var(--accent-cyan)}.finding-top,.finding-labels{display:flex;flex-wrap:wrap;align-items:center;gap:.55rem}.finding-top{justify-content:space-between;gap:1rem}h3{margin:0;font-size:1rem}.badge{display:inline-flex;align-items:center;padding:.26rem .55rem;border-radius:999px;font-size:.68rem;font-weight:850;letter-spacing:.06em;text-transform:uppercase}.category{color:#c4b5fd;background:rgba(139,92,246,.14);border:1px solid rgba(139,92,246,.35)}.severity-critical{color:#fff;background:#d91645}.severity-high{color:#fecdd3;background:rgba(244,63,94,.2);border:1px solid #fb7185}.severity-medium{color:#fcd34d;background:rgba(245,158,11,.16);border:1px solid rgba(245,158,11,.55)}.severity-low{color:#a5f3fc;background:rgba(6,182,212,.14);border:1px solid rgba(6,182,212,.45)}.status-pass{color:#6ee7b7;background:rgba(16,185,129,.13);border:1px solid rgba(16,185,129,.4)}.status-vulnerable{color:#fda4af;background:rgba(244,63,94,.15);border:1px solid rgba(244,63,94,.42)}.finding-copy{color:#cbd5e1;margin:.8rem 0 .35rem}.fix{color:var(--text-muted);margin:.25rem 0 0}.fix strong{color:var(--accent-amber)}details{margin-top:.8rem;padding-top:.7rem;border-top:1px solid var(--border)}summary{color:var(--accent-violet);cursor:pointer;font-weight:700;font-size:.85rem}.curl-row{display:flex;align-items:flex-start;gap:.6rem;margin-top:.6rem}pre{flex:1;min-width:0;margin:0;padding:.7rem;overflow-x:auto;color:#a5f3fc;background:var(--bg-dark);border-radius:7px;font:.78rem/1.5 Consolas,monospace;white-space:pre-wrap;word-break:break-word}.copy-curl{min-height:34px;padding:.35rem .6rem;font-size:.75rem}
-    .modal-backdrop{display:none;place-items:center;position:fixed;inset:0;z-index:10;padding:1rem;background:rgba(0,0,0,.78);backdrop-filter:blur(5px)}.modal{width:min(850px,100%);max-height:86vh;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}.modal-header{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:1rem 1.2rem;border-bottom:1px solid var(--border)}.modal-header h2{font-size:1rem}.modal-body{overflow:auto;padding:1rem;background:var(--bg-dark)}.modal-body pre{min-height:240px}
-    @media(max-width:780px){.field-grid,.metrics{grid-template-columns:1fr 1fr}.navbar{padding:.8rem 5vw;align-items:flex-start}.nav-links{flex-wrap:wrap;justify-content:flex-end}}@media(max-width:520px){.field-grid,.metrics{grid-template-columns:1fr}.navbar{display:block}.nav-links{justify-content:flex-start;margin-top:.7rem}.finding-top{display:block}.finding-labels{margin-top:.6rem}.curl-row{display:block}.copy-curl{margin-top:.5rem}}
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SentinelAPI | Zero-Trust Cyber Audit</title>
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <!-- Three.js CDN for Interactive 3D Shield -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
-  <nav class="navbar" aria-label="Primary navigation"><a class="brand" href="/"><span class="brand-icon">S</span><span>SentinelAPI <span class="muted">|</span> Zero-Trust Scanner</span></a><ul class="nav-links"><li><a href="#dashboard">Dashboard</a></li><li><a href="#raw-json" id="raw-json-link">Raw JSON Modal</a></li><li><a href="https://github.com/suhanichawla29/SentinelAPI_AMIhacks2026" target="_blank" rel="noreferrer">GitHub repository</a></li></ul></nav>
-  <main id="dashboard"><p class="eyebrow">Continuous authorization verification</p><h1>Security audit console</h1><p class="lede">Probe an API boundary, inspect OWASP-aligned findings, and keep every verification reproducible.</p>
-    <section class="panel probe-deck" aria-labelledby="probe-title"><div class="section-heading"><h2 id="probe-title">Target configuration &amp; probe deck</h2><span id="scan-status" class="muted" aria-live="polite">Ready</span></div><div class="field-grid"><label>Target Base URL<input id="target-url" type="url" value="http://127.0.0.1:8000"></label><label>OpenAPI / Swagger Spec URL<input id="spec-url" type="url" value="http://127.0.0.1:8000/openapi.json"></label><label>Scan Priority<select id="priority-select"><option value="all">Full Audit (All Checks)</option><option value="high">High Priority Only (BOLA &amp; Broken Auth)</option></select></label></div><div class="actions"><button id="run-scan" class="primary" type="button">⚡ Run Security Scan</button><button id="refresh-result" type="button">↻ Refresh Result</button><button id="view-json" type="button">📄 View Raw JSON</button><button id="download-report" type="button">⬇ Download Report</button></div></section>
-    <section class="metrics" aria-label="Executive metrics"><div class="metric"><span class="metric-label">Target Endpoint</span><strong id="metric-target" class="metric-value">http://127.0.0.1:8000</strong></div><div class="metric"><span class="metric-label">Security Health</span><strong id="metric-health" class="metric-value"><span class="badge status-pass">READY</span></strong></div><div class="metric"><span class="metric-label">Total Checks</span><strong id="metric-checks" class="metric-value">0</strong></div><div class="metric"><span class="metric-label">Vulnerabilities Found</span><strong id="metric-vulnerabilities" class="metric-value">0</strong></div></section>
-    <section class="panel findings-panel" aria-labelledby="findings-title"><div class="section-heading"><h2 id="findings-title">Security verifications &amp; audit trail</h2><span id="finding-count" class="muted">0 findings</span></div><div id="findings"><p class="muted">Run a scan to populate the audit trail.</p></div></section>
-  </main>
-  <div id="raw-json" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="raw-title"><div class="modal"><div class="modal-header"><h2 id="raw-title">Raw scan report</h2><div><button id="copy-json" type="button">Copy JSON</button><button id="close-json" type="button">Close</button></div></div><div class="modal-body"><pre id="raw-json-content">No report loaded.</pre></div></div></div>
-  <script src="/script.js"></script>
+  <!-- 3D Canvas Background -->
+  <canvas id="bg-canvas"></canvas>
+
+  <div class="app-layout">
+    <!-- Top Cyber Nav -->
+    <header class="cyber-header">
+      <div class="brand">
+        <div class="brand-shield-icon">🛡️</div>
+        <div>
+          <span class="brand-title">SENTINEL<span class="accent-text">API</span></span>
+          <span class="brand-tag">ZERO-TRUST AUDIT CORE</span>
+        </div>
+      </div>
+      <div class="nav-links">
+        <button class="nav-btn active">Console</button>
+        <button class="nav-btn" onclick="openJsonModal()">Raw Schema</button>
+        <a href="https://github.com" target="_blank" class="nav-btn external">GitHub ↗</a>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <!-- Hero Header -->
+      <section class="hero-section">
+        <div class="status-pill">
+          <span class="pulse-dot"></span>
+          REAL-TIME AUTHORIZATION PROBE ENGINE
+        </div>
+        <h1 class="glitch-header">Autonomous API Security Console</h1>
+        <p class="hero-subtext">Deep-inspection engine for OWASP API Security Top 10 flaws, BOLA logic verification, and token isolation.</p>
+      </section>
+
+      <!-- Target Probe Console Card -->
+      <div class="cyber-card glass-panel">
+        <div class="card-header-bar">
+          <span class="panel-tag">// TARGET PROBE CONFIGURATION</span>
+          <span id="live-indicator" class="live-tag">READY</span>
+        </div>
+        
+        <div class="probe-grid">
+          <div class="input-group">
+            <label>TARGET BASE URL</label>
+            <input type="text" id="target-url" value="http://127.0.0.1:8000" placeholder="https://api.domain.com" />
+          </div>
+          <div class="input-group">
+            <label>OPENAPI SPEC PATH</label>
+            <input type="text" id="spec-url" value="http://127.0.0.1:8000/openapi.json" placeholder="/openapi.json" />
+          </div>
+          <div class="input-group">
+            <label>SCAN PRIORITY</label>
+            <select id="priority-select">
+              <option value="all">Full Audit (All Checks)</option>
+              <option value="high">High Priority Only (BOLA & Broken Auth)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="action-bar">
+          <button id="scan-btn" class="cyber-button primary" onclick="runScan()">
+            <span class="btn-glow"></span>
+            <span class="btn-text">⚡ RUN SECURITY AUDIT</span>
+          </button>
+          <button class="cyber-button secondary" onclick="fetchReport()">↻ Refresh State</button>
+          <button class="cyber-button secondary" onclick="openJsonModal()">📄 View JSON</button>
+          <button class="cyber-button secondary" onclick="downloadJson()">⬇ Export Artifact</button>
+        </div>
+      </div>
+
+      <!-- Quick Metrics HUD -->
+      <div class="metrics-grid">
+        <div class="metric-card glass-panel">
+          <span class="metric-label">INSPECTED ENDPOINT</span>
+          <span id="metric-target" class="metric-val mono-font">http://127.0.0.1:8000</span>
+        </div>
+        <div class="metric-card glass-panel">
+          <span class="metric-label">SECURITY HEALTH</span>
+          <div class="health-container">
+            <span id="overall-badge" class="cyber-badge badge-pass">PASS</span>
+          </div>
+        </div>
+        <div class="metric-card glass-panel">
+          <span class="metric-label">TOTAL VERIFICATIONS</span>
+          <span id="total-checks" class="metric-val">3</span>
+        </div>
+        <div class="metric-card glass-panel">
+          <span class="metric-label">DETECTED ANOMALIES</span>
+          <span id="vuln-count" class="metric-val alert-count">0</span>
+        </div>
+      </div>
+
+      <!-- Findings Stream Section -->
+      <div class="cyber-card glass-panel findings-panel">
+        <div class="card-header-bar">
+          <span class="panel-tag">// VERIFICATION EVIDENCE STREAM</span>
+          <span id="checks-count" class="stream-count">3 verifications ready</span>
+        </div>
+        <div id="checks-container" class="checks-stream">
+          <!-- Dynamic Finding Cards will be injected here -->
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Raw JSON Modal -->
+  <div id="json-modal" class="modal-backdrop" onclick="closeJsonModal(event)">
+    <div class="modal-window glass-panel">
+      <div class="modal-header">
+        <span class="panel-tag">AUDIT_REPORT_RAW.JSON</span>
+        <button class="close-btn" onclick="closeModal()">✕</button>
+      </div>
+      <pre id="modal-json-pre" class="json-viewer"></pre>
+      <div class="modal-actions">
+        <button class="cyber-button secondary" onclick="copyJsonToClipboard()">Copy JSON</button>
+        <button class="cyber-button primary" onclick="downloadJson()">Download File</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3D Scene Controller & Application Script -->
+  <script>
+    /* ================= THREE.JS 3D SHIELD BACKGROUND ================= */
+    let scene, camera, renderer, shieldMesh, coreIco;
+    let currentColor = 0x10b981; // Default emerald PASS
+
+    function init3D() {
+      const canvas = document.getElementById('bg-canvas');
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.z = 22;
+
+      renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+      // Outer Wireframe Geodesic Sphere
+      const outerGeo = new THREE.IcosahedronGeometry(11, 2);
+      const outerMat = new THREE.MeshBasicMaterial({
+        color: 0x8b5cf6,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.12
+      });
+      shieldMesh = new THREE.Mesh(outerGeo, outerMat);
+      scene.add(shieldMesh);
+
+      // Inner Rotating Core Shield
+      const coreGeo = new THREE.OctahedronGeometry(6, 1);
+      const coreMat = new THREE.MeshStandardMaterial({
+        color: currentColor,
+        wireframe: true,
+        emissive: currentColor,
+        emissiveIntensity: 0.4
+      });
+      coreIco = new THREE.Mesh(coreGeo, coreMat);
+      scene.add(coreIco);
+
+      const light = new THREE.PointLight(0xffffff, 1, 100);
+      light.position.set(10, 10, 20);
+      scene.add(light);
+
+      window.addEventListener('resize', onWindowResize);
+      document.addEventListener('mousemove', onMouseMove);
+      animate();
+    }
+
+    let mouseX = 0, mouseY = 0;
+    function onMouseMove(e) {
+      mouseX = (e.clientX / window.innerWidth) - 0.5;
+      mouseY = (e.clientY / window.innerHeight) - 0.5;
+    }
+
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function update3DColor(hexColor) {
+      if (coreIco) {
+        coreIco.material.color.setHex(hexColor);
+        coreIco.material.emissive.setHex(hexColor);
+      }
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      if (shieldMesh && coreIco) {
+        shieldMesh.rotation.y += 0.0018;
+        shieldMesh.rotation.x += 0.0009;
+
+        coreIco.rotation.y -= 0.0035;
+        coreIco.rotation.z += 0.002;
+
+        shieldMesh.rotation.y += (mouseX * 0.4 - shieldMesh.rotation.y) * 0.05;
+        shieldMesh.rotation.x += (mouseY * 0.4 - shieldMesh.rotation.x) * 0.05;
+      }
+      renderer.render(scene, camera);
+    }
+
+    init3D();
+
+    /* ================= DASHBOARD SCANNER ENGINE ================= */
+    let currentReport = null;
+
+    function renderCheckCard(c) {
+      const status = (c.status || 'INFO').toUpperCase();
+      const isVuln = status === 'VULNERABLE' || status === 'FAIL';
+      const statusClass = isVuln ? 'badge-fail' : 'badge-pass';
+
+      const sev = (c.severity || 'HIGH').toUpperCase();
+      const sevClass = 'sev-' + sev.toLowerCase();
+
+      return `
+        <div class="finding-card ${isVuln ? 'finding-vuln' : ''}">
+          <div class="finding-header">
+            <div class="finding-title-group">
+              <span class="severity-pill ${sevClass}">${sev}</span>
+              <span class="finding-title">${c.name || 'API Verification Check'}</span>
+              <span class="category-tag">${c.category || 'OWASP API1:2023'}</span>
+            </div>
+            <span class="cyber-badge ${statusClass}">${status}</span>
+          </div>
+
+          <div class="finding-body">
+            <p class="finding-explanation">${c.explanation || 'No verification narrative available.'}</p>
+            ${c.suggested_fix ? `
+              <div class="suggested-fix-box">
+                <span class="fix-label">Suggested Architecture Fix:</span>
+                <span>${c.suggested_fix}</span>
+              </div>
+            ` : ''}
+          </div>
+
+          <div class="meta-strip">
+            <span class="meta-tag">HTTP Status: <strong>${c.status_code || 200}</strong></span>
+            ${c.poc_curl ? `
+              <details class="poc-collapsible">
+                <summary>Reproduce with cURL</summary>
+                <div class="poc-wrapper">
+                  <pre><code>${c.poc_curl}</code></pre>
+                  <button class="copy-poc-btn" onclick="navigator.clipboard.writeText('${c.poc_curl.replace(/'/g, "\\'")}'); alert('cURL copied!');">Copy</button>
+                </div>
+              </details>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    function applyReportToUI(data) {
+      currentReport = data;
+      document.getElementById('metric-target').textContent = data.target_url || document.getElementById('target-url').value;
+      
+      const badge = document.getElementById('overall-badge');
+      const isVuln = (data.overall_result || '').toUpperCase() === 'VULNERABLE';
+      const status = isVuln ? 'VULNERABLE' : 'PASS';
+      
+      badge.textContent = status;
+      badge.className = 'cyber-badge ' + (isVuln ? 'badge-fail' : 'badge-pass');
+
+      // Update 3D Shield reaction
+      update3DColor(isVuln ? 0xf43f5e : 0x10b981);
+
+      const checks = data.checks || [];
+      document.getElementById('total-checks').textContent = checks.length;
+      const vulns = checks.filter(c => (c.status || '').toUpperCase() === 'VULNERABLE').length;
+      document.getElementById('vuln-count').textContent = vulns;
+
+      const container = document.getElementById('checks-container');
+      const countLabel = document.getElementById('checks-count');
+
+      if (checks.length > 0) {
+        countLabel.textContent = `${checks.length} verifications audited`;
+        container.innerHTML = checks.map(renderCheckCard).join('');
+      } else {
+        countLabel.textContent = '0 checks';
+        container.innerHTML = `<p class="empty-msg">${data.error || 'No scan findings recorded yet.'}</p>`;
+      }
+
+      document.getElementById('modal-json-pre').textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function fetchReport() {
+      try {
+        const res = await fetch('/report');
+        const data = await res.json();
+        applyReportToUI(data);
+      } catch (err) {
+        console.error("Failed to load initial report", err);
+      }
+    }
+
+    async function runScan() {
+      const btn = document.getElementById('scan-btn');
+      const indicator = document.getElementById('live-indicator');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="btn-text">⏳ PROBING TARGET...</span>';
+      indicator.textContent = 'SCANNING';
+      indicator.className = 'live-tag pulse';
+
+      const targetUrl = document.getElementById('target-url').value;
+      const specUrl = document.getElementById('spec-url').value;
+      const priority = document.getElementById('priority-select').value;
+
+      try {
+        const res = await fetch('/scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target_url: targetUrl, spec_url: specUrl, priority })
+        });
+        const init = await res.json();
+        const scanId = init.scan_id;
+
+        let attempts = 0;
+        const poller = setInterval(async () => {
+          attempts++;
+          const check = await fetch(`/report/${scanId}`);
+          const result = await check.json();
+
+          if (result.status !== 'running' || attempts > 25) {
+            clearInterval(poller);
+            btn.disabled = false;
+            btn.innerHTML = '<span class="btn-glow"></span><span class="btn-text">⚡ RUN SECURITY AUDIT</span>';
+            indicator.textContent = 'READY';
+            indicator.className = 'live-tag';
+            applyReportToUI(result);
+          }
+        }, 1200);
+      } catch (e) {
+        alert('Scanner execution failure: ' + e);
+        btn.disabled = false;
+        btn.innerHTML = '<span class="btn-glow"></span><span class="btn-text">⚡ RUN SECURITY AUDIT</span>';
+        indicator.textContent = 'READY';
+      }
+    }
+
+    function openJsonModal() { document.getElementById('json-modal').style.display = 'flex'; }
+    function closeModal() { document.getElementById('json-modal').style.display = 'none'; }
+    function closeJsonModal(e) { if (e.target.id === 'json-modal') closeModal(); }
+    function copyJsonToClipboard() {
+      if (currentReport) {
+        navigator.clipboard.writeText(JSON.stringify(currentReport, null, 2));
+        alert('Artifact JSON copied to clipboard!');
+      }
+    }
+    function downloadJson() {
+      if (!currentReport) return;
+      const blob = new Blob([JSON.stringify(currentReport, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `sentinel_audit_${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    fetchReport();
+  </script>
 </body>
 </html>
