@@ -1,6 +1,6 @@
 {
-  "checked_at_utc": "2026-09-24T19:32:13Z",
-  "overall_result": "PASS",
+  "checked_at_utc": "2026-09-24T19:46:03Z",
+  "overall_result": "VULNERABLE",
   "checks": [
     {
       "name": "Own order",
@@ -18,10 +18,10 @@
     },
     {
       "name": "Other user's order",
-      "status": "PASS",
-      "status_code": 403,
-      "explanation": "The API blocked Asha from reading Ravi's order.",
-      "suggested_fix": null
+      "status": "VULNERABLE",
+      "status_code": 200,
+      "explanation": "Asha's token successfully returned Ravi's order.",
+      "suggested_fix": "Check the order owner against the authenticated user before returning any order record."
     }
   ]
 }
