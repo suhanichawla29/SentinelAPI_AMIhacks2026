@@ -12,7 +12,7 @@ REPORT_FILE = ROOT / "scan_report.json"
 SCANNER_FILE = ROOT / "Scanner" / "Scan.py"
 
 
-class DashboardHandler(BaseHTTPRequestHandler):
+class Dashboard(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/":
             return self.serve_file(FRONTEND / 'index.html', 'text/html; charset=utf-8')
@@ -82,4 +82,4 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
 if __name__ == '__main__':
     print('Dashboard: http://127.0.0.1:8501')
-    HTTPServer(('127.0.0.1', 8501), DashboardHandler).serve_forever()
+    HTTPServer(('127.0.0.1', 8501), Dashboard).serve_forever()
