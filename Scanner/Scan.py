@@ -8,6 +8,21 @@ scanner_dir = Path(__file__).resolve().parent
 config = json.loads((scanner_dir / "config.json").read_text(encoding="utf-8"))
 report_file = scanner_dir.parent / "scan_report.json"
 
+# Support the structured multi-endpoint configuration format.
+if "target" in config:
+    target = config["target"]
+    checks_config = config.get("checks", [])
+    config["base_url"] = target["base_url"]
+    config["token"] = config.get("token", "")
+    config["own_user"] = config.get("own_user", "")
+    config["other_user"] = config.get("other_user", "")
+    for check in checks_config:
+        endpoint = check.get("endpoint", "")
+        if check.get("test_type") == "VALID_USER" and "own_order_id" not in config:
+            config["own_order_id"] = endpoint.rsplit("/", 1)[-1]
+        elif check.get("test_type") == "CROSS_TENANT_IDOR" and "other_order_id" not in config:
+            config["other_order_id"] = endpoint.rsplit("/", 1)[-1]
+
 
 def utc_timestamp():
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
