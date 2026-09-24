@@ -5,133 +5,376 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SentinelAPI Security Dashboard</title>
   <style>
-    * { box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #0d1117;
-      color: #c9d1d9;
-      margin: 0;
-      padding: 2rem;
+    :root {
+      --bg-dark: #0b0f17;
+      --surface: #131b26;
+      --surface-elevated: #1a2433;
+      --border: #222f42;
+      --border-light: #2d3e56;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      
+      /* Vibrant Accent Palette */
+      --accent-emerald: #10b981;
+      --accent-emerald-glow: rgba(16, 185, 129, 0.2);
+      --accent-violet: #8b5cf6;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --accent-cyan: #06b6d4;
     }
-    .container { max-width: 950px; margin: 0 auto; }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Modern Navbar */
+    .navbar {
+      height: 64px;
+      background: rgba(19, 27, 38, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 700;
+      font-size: 1.15rem;
+      letter-spacing: -0.3px;
+      color: var(--text-main);
+    }
+
+    .brand-icon {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, var(--accent-emerald), var(--accent-violet));
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 800;
+      box-shadow: 0 0 16px var(--accent-emerald-glow);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.5rem;
+      list-style: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+
+    .nav-links a:hover, .nav-links a.active {
+      color: var(--accent-emerald);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 1050px;
+      width: 100%;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    /* Cards */
     .card {
-      background: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
       padding: 1.5rem;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+
+    .overview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem;
       margin-bottom: 1.5rem;
     }
-    h1 { color: #58a6ff; margin-top: 0; font-size: 1.6rem; }
-    h2 { color: #f0f6fc; font-size: 1.2rem; margin-top: 0; border-bottom: 1px solid #21262d; padding-bottom: 0.5rem; }
-    .meta-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
-    .label { font-weight: 600; color: #8b949e; }
+
+    .stat-tile {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+    }
+
+    .stat-val {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    /* Badges */
     .badge {
-      display: inline-block;
-      padding: 0.25rem 0.65rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0.25rem 0.75rem;
       border-radius: 20px;
       font-weight: 700;
-      font-size: 0.8rem;
-      letter-spacing: 0.5px;
+      font-size: 0.75rem;
+      letter-spacing: 0.6px;
       text-transform: uppercase;
+      width: fit-content;
     }
-    .status-pass { background: #238636; color: #fff; }
-    .status-inconclusive { background: #d29922; color: #fff; }
-    .status-fail { background: #da3633; color: #fff; }
-    .btn-group { display: flex; gap: 0.75rem; margin-top: 1rem; }
-    button {
-      background: #238636;
-      color: #fff;
-      border: 1px solid rgba(240, 246, 252, 0.1);
-      padding: 0.5rem 1.1rem;
-      border-radius: 6px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    button.secondary { background: #21262d; }
-    button:hover { opacity: 0.9; }
 
-    /* Detailed Check Cards */
-    .check-card {
-      background: #0d1117;
-      border: 1px solid #30363d;
-      border-radius: 6px;
-      padding: 1.2rem;
-      margin-top: 1rem;
+    .badge::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
     }
+
+    .status-pass {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: var(--accent-emerald);
+    }
+    .status-pass::before { background: var(--accent-emerald); box-shadow: 0 0 8px var(--accent-emerald); }
+
+    .status-fail {
+      background: rgba(244, 63, 94, 0.15);
+      border: 1px solid rgba(244, 63, 94, 0.3);
+      color: var(--accent-rose);
+    }
+    .status-fail::before { background: var(--accent-rose); box-shadow: 0 0 8px var(--accent-rose); }
+
+    .status-inconclusive {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: var(--accent-amber);
+    }
+    .status-inconclusive::before { background: var(--accent-amber); }
+
+    /* Action Buttons */
+    .btn-group {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    button {
+      background: linear-gradient(135deg, var(--accent-emerald), #059669);
+      color: #fff;
+      border: none;
+      padding: 0.6rem 1.25rem;
+      border-radius: 7px;
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px var(--accent-emerald-glow);
+    }
+
+    button:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+    }
+
+    button.secondary {
+      background: var(--surface-elevated);
+      color: var(--text-main);
+      border: 1px solid var(--border-light);
+      box-shadow: none;
+    }
+
+    button.secondary:hover {
+      background: var(--border);
+    }
+
+    /* Check Cards */
+    .card-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.75rem;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .check-card {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-top: 0.85rem;
+      transition: border-color 0.2s ease;
+    }
+
+    .check-card:hover {
+      border-color: var(--border-light);
+    }
+
     .check-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 0.75rem;
+      margin-bottom: 0.5rem;
     }
-    .check-title { font-size: 1.05rem; font-weight: 600; color: #e6edf3; }
-    .check-desc { color: #8b949e; font-size: 0.95rem; margin-bottom: 0.75rem; line-height: 1.4; }
-    
+
+    .check-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .check-desc {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin-bottom: 0.85rem;
+    }
+
     .check-meta-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 0.5rem 1rem;
-      background: #161b22;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.75rem;
+      background: var(--bg-dark);
       padding: 0.75rem 1rem;
       border-radius: 6px;
-      border: 1px solid #21262d;
-      font-size: 0.85rem;
+      border: 1px solid var(--border);
+      font-size: 0.82rem;
       margin-bottom: 0.75rem;
     }
-    .meta-item { display: flex; flex-direction: column; }
-    .meta-key { color: #8b949e; text-transform: uppercase; font-size: 0.75rem; font-weight: 600; }
-    .meta-val { color: #f0f6fc; font-family: monospace; word-break: break-all; margin-top: 2px; }
+
+    .meta-item { display: flex; flex-direction: column; gap: 2px; }
+    .meta-key { color: var(--text-muted); text-transform: uppercase; font-size: 0.7rem; font-weight: 600; }
+    .meta-val { color: var(--accent-cyan); font-family: ui-monospace, Menlo, monospace; word-break: break-all; }
 
     details {
-      background: #161b22;
-      border: 1px solid #21262d;
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
       border-radius: 6px;
-      padding: 0.5rem 0.75rem;
-      margin-top: 0.5rem;
+      padding: 0.6rem 0.85rem;
+      margin-top: 0.6rem;
     }
+
     summary {
       cursor: pointer;
-      color: #58a6ff;
-      font-size: 0.85rem;
+      color: var(--accent-violet);
+      font-size: 0.82rem;
       font-weight: 600;
       user-select: none;
     }
+
     pre {
-      background: #020617;
-      padding: 0.75rem;
-      border-radius: 4px;
-      color: #79c0ff;
+      background: transparent;
+      padding: 0.75rem 0 0 0;
+      color: var(--accent-cyan);
       font-size: 0.8rem;
       overflow-x: auto;
-      margin-top: 0.5rem;
-      margin-bottom: 0;
+      font-family: ui-monospace, monospace;
     }
   </style>
 </head>
 <body>
+
+  <!-- Top Navigation Bar -->
+  <nav class="navbar">
+    <div class="brand">
+      <div class="brand-icon">S</div>
+      <span>SentinelAPI</span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="/" class="active">Dashboard</a></li>
+      <li><a href="/report" target="_blank">Raw JSON</a></li>
+      <li><a href="https://github.com" target="_blank">GitHub</a></li>
+    </ul>
+    <div class="nav-actions">
+      <button class="secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="fetchReport()">Sync</button>
+    </div>
+  </nav>
+
+  <!-- Content Body -->
   <div class="container">
+    
     <div class="card">
-      <h1>SentinelAPI Scanner Dashboard</h1>
-      <div class="meta-row">
-        <div>
-          <span class="label">Checked at (UTC): </span>
-          <span id="checked-at" style="color: #e6edf3; font-weight: 500;">—</span>
+      <div class="overview-grid">
+        <div class="stat-tile">
+          <span class="stat-label">Last Checked (UTC)</span>
+          <span id="checked-at" class="stat-val">—</span>
         </div>
-        <div>
-          <span class="label">Overall Result: </span>
-          <span id="overall-badge" class="badge status-inconclusive">LOADING</span>
+        <div class="stat-tile">
+          <span class="stat-label">Scan Health</span>
+          <div style="margin-top: 4px;">
+            <span id="overall-badge" class="badge status-inconclusive">LOADING</span>
+          </div>
+        </div>
+        <div class="stat-tile">
+          <span class="stat-label">Active Engine</span>
+          <span class="stat-val" style="color: var(--accent-violet); font-size: 0.95rem;">Scanner/Scan.py</span>
         </div>
       </div>
+
       <div class="btn-group">
-        <button id="scan-btn" onclick="runScan()">Run scan</button>
-        <button class="secondary" onclick="fetchReport()">Refresh result</button>
+        <button id="scan-btn" onclick="runScan()">
+          <span>⚡ Run Security Scan</span>
+        </button>
+        <button class="secondary" onclick="fetchReport()">
+          <span>↻ Refresh Result</span>
+        </button>
       </div>
     </div>
 
     <div class="card">
-      <h2>Scan Checks & Findings</h2>
+      <div class="card-title-row">
+        <span class="card-title">Security Verifications & Audit Trail</span>
+      </div>
       <div id="checks-container">Loading checks...</div>
     </div>
+
   </div>
 
   <script>
@@ -139,13 +382,12 @@
       const status = (c.status || c.result || 'INFO').toUpperCase();
       const statusClass = status === 'PASS' ? 'status-pass' : status === 'FAIL' ? 'status-fail' : 'status-inconclusive';
 
-      // Collect recognized metadata fields
       const meta = [];
       if (c.endpoint || c.url) meta.push({ key: 'Endpoint', val: c.endpoint || c.url });
       if (c.method) meta.push({ key: 'Method', val: c.method });
       if (c.status_code || c.http_status) meta.push({ key: 'HTTP Status', val: c.status_code || c.http_status });
       if (c.severity) meta.push({ key: 'Severity', val: c.severity });
-      if (c.type) meta.push({ key: 'Type', val: c.type });
+      if (c.type) meta.push({ key: 'Check Type', val: c.type });
 
       const metaHtml = meta.length > 0 ? `
         <div class="check-meta-grid">
@@ -158,11 +400,9 @@
         </div>
       ` : '';
 
-      // Detailed description / message
       const desc = c.details || c.description || c.message || '';
       const descHtml = desc ? `<div class="check-desc">${desc}</div>` : '';
 
-      // Expandable section for payload, evidence, or raw check payload
       const extraData = Object.assign({}, c);
       delete extraData.name;
       delete extraData.status;
@@ -173,7 +413,7 @@
 
       const rawJson = Object.keys(extraData).length > 0 ? `
         <details>
-          <summary>View Diagnostic / Technical Details</summary>
+          <summary>Diagnostic Payload</summary>
           <pre>${JSON.stringify(extraData, null, 2)}</pre>
         </details>
       ` : '';
@@ -181,7 +421,7 @@
       return `
         <div class="check-card">
           <div class="check-header">
-            <span class="check-title">${c.name || c.id || 'Unnamed Security Check'}</span>
+            <span class="check-title">${c.name || c.id || 'Security Check'}</span>
             <span class="badge ${statusClass}">${status}</span>
           </div>
           ${descHtml}
@@ -210,18 +450,18 @@
         if (data.checks && data.checks.length > 0) {
           container.innerHTML = data.checks.map(renderCheckCard).join('');
         } else if (data.error) {
-          container.innerHTML = `<p style="color: #f85149; font-weight: 500;">${data.error}</p>`;
+          container.innerHTML = `<p style="color: var(--accent-rose); font-weight: 500;">${data.error}</p>`;
         } else {
-          container.innerHTML = '<p style="color: #8b949e;">No scan checks recorded in scan_report.json.</p>';
+          container.innerHTML = '<p style="color: var(--text-muted);">No scan checks recorded in scan_report.json.</p>';
         }
       } catch (err) {
-        document.getElementById('checks-container').innerHTML = '<p style="color: #f85149;">Error loading scan report.</p>';
+        document.getElementById('checks-container').innerHTML = '<p style="color: var(--accent-rose);">Error communicating with report endpoint.</p>';
       }
     }
 
     async function runScan() {
       const btn = document.getElementById('scan-btn');
-      btn.textContent = 'Running...';
+      btn.innerHTML = '<span>⏳ Scanning...</span>';
       btn.disabled = true;
       try {
         await fetch('/scan', { method: 'POST' });
@@ -229,7 +469,7 @@
       } catch (e) {
         alert('Scan trigger failed');
       } finally {
-        btn.textContent = 'Run scan';
+        btn.innerHTML = '<span>⚡ Run Security Scan</span>';
         btn.disabled = false;
       }
     }
@@ -237,5 +477,4 @@
     fetchReport();
   </script>
 </body>
-</html>
 </html>
