@@ -1,34 +1,40 @@
 import json
 from datetime import datetime, timezone
+from pathlib import Path
 
 import httpx
 
-headers = {"Authorization": "Bearer asha-demo-token"}
+scanner_dir = Path(__file__).resolve().parent
+config = json.loads((scanner_dir / "config.json").read_text(encoding="utf-8"))
+report_file = scanner_dir.parent / "scan_report.json"
+
+base_url = config["base_url"].rstrip("/")
+headers = {"Authorization": f"Bearer {config['token']}"}
+own_url = f"{base_url}/orders/{config['own_order_id']}"
+other_url = f"{base_url}/orders/{config['other_order_id']}"
 
 try:
-    own_order = httpx.get(
-        "http://127.0.0.1:8000/orders/101",
-        headers=headers,
-        timeout=5,
-    )
+    own_response = httpx.get(own_url, headers=headers, timeout=5)
 
-    if own_order.status_code != 200 or own_order.json().get("owner") != "asha":
-        print("INCONCLUSIVE: Asha cannot access her own order. Check the API or token.")
+    if (
+        own_response.status_code != 200
+        or own_response.json().get("owner") != config["own_user"]
+    ):
+        print("INCONCLUSIVE: The test user could not read their own order.")
         raise SystemExit(1)
 
-    response = httpx.get(
-        "http://127.0.0.1:8000/orders/202",
-        headers=headers,
-        timeout=5,
-    )
+    response = httpx.get(other_url, headers=headers, timeout=5)
 
-    if response.status_code == 200 and response.json().get("owner") == "ravi":
+    if (
+        response.status_code == 200
+        and response.json().get("owner") == config["other_user"]
+    ):
         result = "VULNERABLE"
-        explanation = "Asha could read Ravi's order."
+        explanation = "The test user could read another user's order."
         fix = "Check that the order belongs to the authenticated user before returning it."
     elif response.status_code == 403:
         result = "PASS"
-        explanation = "The API blocked Asha from reading Ravi's order."
+        explanation = "The API blocked access to another user's order."
         fix = None
     else:
         result = "INCONCLUSIVE"
@@ -38,16 +44,14 @@ try:
     report = {
         "checked_at": datetime.now(timezone.utc).isoformat(),
         "check": "Order ownership authorization",
-        "request": "Asha requests Ravi's order 202",
+        "request": f"GET /orders/{config['other_order_id']}",
         "status_code": response.status_code,
         "result": result,
         "explanation": explanation,
         "suggested_fix": fix,
     }
 
-    with open("scan_report.json", "w", encoding="utf-8") as file:
-        json.dump(report, file, indent=2)
-
+    report_file.write_text(json.dumps(report, indent=2), encoding="utf-8")
     print(f"{result}: {explanation}")
     print("Report saved to scan_report.json")
 
