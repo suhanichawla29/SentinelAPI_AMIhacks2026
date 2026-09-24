@@ -12,7 +12,7 @@ REPORT_FILE = ROOT / "scan_report.json"
 SCANNER_FILE = ROOT / "Scanner" / "Scan.py"
 
 
-<<<<<<< HEAD
+
 class Dashboard(BaseHTTPRequestHandler):
     def do_POST(self):
         if self.path != "/scan":
@@ -40,9 +40,9 @@ class Dashboard(BaseHTTPRequestHandler):
         self.send_header("Location", "/")
         self.end_headers()
 
-=======
+
 class DashboardHandler(BaseHTTPRequestHandler):
->>>>>>> origin/agents/pasted-text-processing
+
     def do_GET(self):
         if self.path == "/":
             return self.serve_file(FRONTEND / 'index.html', 'text/html; charset=utf-8')
@@ -79,7 +79,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
             self.send_error(404)
             return
 
->>>>>>> origin/agents/pasted-text-processing
+
         self.send_response(200)
         self.send_header('Content-Type', content_type)
         self.send_header('Content-Length', str(len(data)))
@@ -112,11 +112,11 @@ class DashboardHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
 
-<<<<<<< HEAD
+
 print("Dashboard: http://127.0.0.1:8501")
 HTTPServer(("127.0.0.1", 8501), Dashboard).serve_forever()
-=======
+
 if __name__ == '__main__':
     print('Dashboard: http://127.0.0.1:8501')
     HTTPServer(('127.0.0.1', 8501), DashboardHandler).serve_forever()
->>>>>>> origin/agents/pasted-text-processing
+
