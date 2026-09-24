@@ -6,16 +6,21 @@ import httpx
 url = "http://127.0.0.1:8000/orders/202"
 headers = {"Authorization": "Bearer asha-demo-token"}
 
-try:
+    try:
     own_order = httpx.get(
-    "http://127.0.0.1:8000/orders/101",
-    headers=headers,
-    timeout=5,
-)
+        "http://127.0.0.1:8000/orders/101",
+        headers=headers,
+        timeout=5,
+    )
 
-if own_order.status_code != 200 or own_order.json().get("owner") != "asha":
-    print("INCONCLUSIVE: Asha cannot access her own order. Check the API or token.")
-    raise SystemExit(1)
+    if own_order.status_code != 200 or own_order.json().get("owner") != "asha":
+        print("INCONCLUSIVE: Asha cannot access her own order. Check the API or token.")
+        raise SystemExit(1)
+
+    response = httpx.get(url, headers=headers, timeout=5)
+
+    if response.status_code == 200 and response.json().get("owner") == "ravi":
+        # Keep the rest of your existing code here
     response = httpx.get(url, headers=headers, timeout=5)
 
     if response.status_code == 200 and response.json().get("owner") == "ravi":
