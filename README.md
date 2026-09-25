@@ -1,52 +1,94 @@
-﻿# SentinelAPI_AMIhacks2026
-Zero-Trust API Vulnerability Scanner
+# SentinelAPI
 
-This project tests a local sandbox API that simulates order access control. The scanner checks whether a valid user can read their own order, whether the API rejects a missing token, and whether a user can access another user's order.
+Zero-trust API security testing console for the SentinelAPI hackathon track. The project includes a FastAPI sandbox, an OpenAPI-aware OWASP API scanner, and a browser dashboard.
 
-## Install requirements
+## Requirements
+
+- Python 3.10+
+- A local API target, such as the included sandbox
+
+Install dependencies:
 
 ```powershell
 python -m pip install "fastapi[standard]" httpx
 ```
 
-## Vulnerable mode demo
+## Run the demo
 
-Start the API in vulnerable mode from the repository root in one terminal:
+Open two PowerShell terminals from the repository root:
 
 ```powershell
-cd "C:\xampp\htdocs\SentinelAPI_AMIhacks2026.worktrees\pasted-text-processing"
+cd "C:\xampp\htdocs\SentinelAPI_AMIhacks2026"
+python -m uvicorn Sandbox_api.main:app --host 127.0.0.1 --port 8000
+```
+
+In the second terminal, start the dashboard:
+
+```powershell
+cd "C:\xampp\htdocs\SentinelAPI_AMIhacks2026"
+python -m uvicorn server:app --host 127.0.0.1 --port 8501
+```
+
+Open [http://127.0.0.1:8501](http://127.0.0.1:8501). Enter a target URL and OpenAPI URL, choose a priority, and run the audit.
+
+## Sandbox modes
+
+The sandbox starts in secure mode. To demonstrate a vulnerable BOLA or authentication result, stop it and restart with a mode:
+
+```powershell
 $env:SANDBOX_MODE = "vulnerable"
 python -m uvicorn Sandbox_api.main:app --host 127.0.0.1 --port 8000
 ```
 
-Start the dashboard in a second terminal:
+Available modes:
+
+- `secure`: ownership and authentication are enforced
+- `vulnerable`: cross-user order access is allowed
+- `no_auth`: authentication is disabled
+- `broken_auth`: token validation rejects requests
+
+## Run the scanner directly
 
 ```powershell
-cd "C:\xampp\htdocs\SentinelAPI_AMIhacks2026.worktrees\pasted-text-processing"
-python dashboard.py
-```
-
-Open http://127.0.0.1:8501 and click Run scan. The dashboard should show the red VULNERABLE result for the missing token and other user's order checks.
-
-## Secure mode demo
-
-Stop the API with Ctrl+C, then restart it without the vulnerable mode flag:
-
-```powershell
-cd "C:\xampp\htdocs\SentinelAPI_AMIhacks2026.worktrees\pasted-text-processing"
-Remove-Item Env:SANDBOX_MODE -ErrorAction SilentlyContinue
-python -m uvicorn Sandbox_api.main:app --host 127.0.0.1 --port 8000
-```
-
-Run the dashboard again, then click Run scan. The dashboard should show PASS for all three checks.
-
-## Scanner and report
-
-You can also run the scanner directly from the repository root:
-
-```powershell
-cd "C:\xampp\htdocs\SentinelAPI_AMIhacks2026.worktrees\pasted-text-processing"
 python Scanner/Scan.py
 ```
 
-The scanner reads the API configuration from `Scanner/config.json` and writes a report to `scan_report.json` in the same format the dashboard reads.
+CLI options:
+
+```text
+--target   Base API URL (default: http://127.0.0.1:8000)
+--spec     OpenAPI JSON URL (default: http://127.0.0.1:8000/openapi.json)
+--out      Report destination (default: scan_report.json)
+--priority all or high (default: all)
+```
+
+Example:
+
+```powershell
+python Scanner/Scan.py --target http://127.0.0.1:8000 --spec http://127.0.0.1:8000/openapi.json --priority all --out scan_report.json
+```
+
+The scanner checks API1 BOLA, API2 broken authentication, API3 sensitive data exposure, and API4 rate limiting. It ingests parameterized OpenAPI paths and falls back to the included order routes when the spec is unavailable.
+
+## Server API
+
+- `POST /scan`: queue a scan with `target_url`, optional `spec_url`, and `priority`
+- `GET /report/{scan_id}`: retrieve a scan report
+- `GET /scans`: list in-memory scan history
+- `GET /report`: retrieve the latest canonical report
+- `GET /`: serve the dashboard
+
+Example request:
+
+```powershell
+Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8501/scan `
+  -ContentType "application/json" `
+  -Body '{"target_url":"http://127.0.0.1:8000","spec_url":"http://127.0.0.1:8000/openapi.json","priority":"all"}'
+```
+
+## Reports
+
+- `scan_report.json`: latest direct scanner report
+- `reports/<scan_id>.json`: reports created by the web server
+
+Reports contain the overall result, timestamp, status, severity, OWASP category, explanation, suggested fix, status code, and reproducible cURL command for every check.
