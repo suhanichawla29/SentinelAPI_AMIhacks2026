@@ -1,5 +1,5 @@
 {
-  "checked_at_utc": "2026-09-25T05:37:04Z",
+  "checked_at_utc": "2026-09-25T05:39:39Z",
   "overall_result": "VULNERABLE",
   "checks": [
     {
@@ -29,9 +29,9 @@
       "category": "API1:2023 Broken Object Level Authorization",
       "severity": "CRITICAL",
       "priority": "HIGH",
-      "status": "PASS",
-      "status_code": 403,
-      "explanation": "Zero-trust tenancy holds: Asha could not access Ravi's resource (HTTP 403).",
+      "status": "VULNERABLE",
+      "status_code": 200,
+      "explanation": "EXPLOITATION CONFIRMED: Asha's token returned Ravi's private record (HTTP 200).",
       "suggested_fix": "Authorize every object access against the authenticated user in the database query and deny cross-user reads.",
       "poc_curl": "curl -i -H 'Authorization: Bearer asha-demo-token' 'http://127.0.0.1:8000/orders/202'",
       "ai_reasoning": "Semantic inspection of '/orders/{order_id}' detected an unisolated object identifier parameter. Rather than brute-force fuzzing random integers, SentinelAPI deduces that cross-tenant access between tenant 'asha' and object 'ravi' must be validated to verify zero-trust tenancy boundaries."
