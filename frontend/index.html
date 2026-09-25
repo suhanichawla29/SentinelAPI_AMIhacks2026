@@ -133,7 +133,7 @@
   <script>
     /* ================= THREE.JS 3D SHIELD BACKGROUND ================= */
     let scene, camera, renderer, shieldMesh, coreIco;
-    let currentColor = 0x10b981; // Default emerald PASS
+    let currentColor = 0x16a34a; // Default green PASS
 
     function init3D() {
       const canvas = document.getElementById('bg-canvas');
@@ -148,7 +148,7 @@
       // Outer Wireframe Geodesic Sphere
       const outerGeo = new THREE.IcosahedronGeometry(11, 2);
       const outerMat = new THREE.MeshBasicMaterial({
-        color: 0x8b5cf6,
+        color: 0x94a3b8,
         wireframe: true,
         transparent: true,
         opacity: 0.12
@@ -161,8 +161,8 @@
       const coreMat = new THREE.MeshStandardMaterial({
         color: currentColor,
         wireframe: true,
-        emissive: currentColor,
-        emissiveIntensity: 0.4
+        emissive: 0x000000,
+        emissiveIntensity: 0
       });
       coreIco = new THREE.Mesh(coreGeo, coreMat);
       scene.add(coreIco);
@@ -191,7 +191,7 @@
     function update3DColor(hexColor) {
       if (coreIco) {
         coreIco.material.color.setHex(hexColor);
-        coreIco.material.emissive.setHex(hexColor);
+        coreIco.material.emissive.setHex(0x000000);
       }
     }
 
@@ -225,8 +225,8 @@
 
       // AI Reasoning callout block
       const aiReasoningHtml = c.ai_reasoning ? `
-        <div style="background: rgba(139, 92, 246, 0.12); border-left: 3px solid var(--accent-violet); padding: 8px 12px; font-size: 13px; color: #ddd6fe; border-radius: 0 6px 6px 0; margin-bottom: 12px;">
-          <strong style="color: #a78bfa;">🧠 AI Semantic Reasoner:</strong> ${c.ai_reasoning}
+        <div style="background: #f8fafc; border-left: 3px solid #cbd5e1; padding: 8px 12px; font-size: 13px; color: #475569; border-radius: 0 6px 6px 0; margin-bottom: 12px;">
+          <strong style="color: #334155;">🧠 AI Semantic Reasoner:</strong> ${c.ai_reasoning}
         </div>
       ` : '';
 
@@ -282,7 +282,7 @@
       badge.className = 'cyber-badge ' + (isVuln ? 'badge-fail' : 'badge-pass');
 
       // Update 3D Shield reaction (Crimson for vulnerable, Emerald for clean)
-      update3DColor(isVuln ? 0xf43f5e : 0x10b981);
+      update3DColor(isVuln ? 0xdc2626 : 0x16a34a);
 
       const checks = data.checks || [];
       document.getElementById('total-checks').textContent = checks.length;
